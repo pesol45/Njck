@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private Storage</title>
+    <title>Queue Storage</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
@@ -17,14 +17,14 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg);
             color: var(--text-h);
             margin: 0;
             display: flex;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            -webkit-tap-highlight-color: transparent;
         }
 
         #loginOverlay {
@@ -32,22 +32,20 @@
             inset: 0;
             background: var(--bg);
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            padding: 20px;
         }
 
-        .login-box {
+        .box {
             background: var(--card-bg);
-            padding: 40px 30px;
-            border-radius: 24px;
+            padding: 40px;
+            border-radius: 28px;
             text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.05);
-            max-width: 320px;
-            width: 100%;
+            width: 90%;
+            max-width: 400px;
         }
 
         input {
@@ -58,100 +56,89 @@
             background: #0f0f13;
             color: white;
             margin-bottom: 20px;
-            width: 80%;
+            width: 100%;
+            box-sizing: border-box;
             text-align: center;
             outline: none;
         }
 
         #content {
             display: none;
-            width: 100%;
-            max-width: 550px;
-            padding: 30px 20px;
+            width: 90%;
+            max-width: 450px;
+            animation: fadeIn 0.5s ease;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 35px;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .account-card {
             background: var(--card-bg);
-            border-radius: 20px;
-            margin-bottom: 18px;
-            padding: 22px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            border-radius: 24px;
+            padding: 30px;
             border: 1px solid rgba(255,255,255,0.03);
+            text-align: center;
         }
 
-        .label { font-size: 10px; color: var(--text-p); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; display: block; }
+        .label { font-size: 11px; color: var(--text-p); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; display: block; }
         
         .value { 
             font-family: monospace; 
-            background: rgba(0,0,0,0.2); 
-            padding: 12px; 
-            border-radius: 10px; 
-            font-size: 14px; 
-            margin-bottom: 12px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            background: rgba(0,0,0,0.3); 
+            padding: 15px; 
+            border-radius: 12px; 
+            font-size: 18px; 
+            margin-bottom: 20px;
+            color: var(--text-h);
         }
 
         .btn {
             background: var(--accent);
             color: white;
             border: none;
-            border-radius: 12px;
-            padding: 14px;
+            border-radius: 14px;
+            padding: 16px;
             font-weight: 700;
             cursor: pointer;
             width: 100%;
             text-transform: uppercase;
+            transition: 0.3s;
         }
 
         .btn.success { background: var(--success); }
 
-        .lock-card {
-            background: rgba(244, 63, 94, 0.05);
-            border: 1px dashed var(--danger);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 18px;
-            color: var(--danger);
+        .status-info {
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--text-p);
         }
 
-        #qrcode { background: white; padding: 10px; border-radius: 12px; margin-top: 20px; }
+        #qrcode { background: white; padding: 10px; border-radius: 12px; display: inline-block; margin-top: 20px; }
+        
+        .empty-state { text-align: center; color: var(--text-p); }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
-        <div class="login-box">
-            <h2>Вход</h2>
+        <div class="box">
+            <h2>Доступ</h2>
             <input type="password" id="passInput" placeholder="Код">
-            <button class="btn" onclick="checkPass()">Открыть</button>
+            <button class="btn" onclick="checkPass()">Войти</button>
             <div id="qrcode"></div>
         </div>
     </div>
 
     <div id="content">
-        <div class="header">
-            <h2>Аккаунты</h2>
-            <button class="btn" style="width:auto; background:#2d2d39; font-size:12px;" onclick="logout()">Выйти</button>
+        <div id="accountDisplay"></div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" style="width:auto; background:#2d2d39; font-size:11px; padding: 8px 20px;" onclick="logout()">Выйти из базы</button>
         </div>
-        <div id="listContainer"></div>
     </div>
 
     <script>
         const PASS = "1488";
         const LOCK_TIME = 86400000;
 
-        // ВНИМАНИЕ: Если ты меняешь этот список, таймеры сбросятся сами!
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
             ["U29rX1lhYklvY2huaXk=", "UjJ0WTd1QTFqVg=="],
@@ -174,24 +161,14 @@
 
         new QRCode(document.getElementById("qrcode"), {
             text: window.location.href,
-            width: 120,
-            height: 120
+            width: 100, height: 100
         });
 
-        // Ключевая функция автоматического сброса
         function autoResetCheck() {
             const currentDataString = JSON.stringify(encryptedAccounts);
-            const savedDataString = localStorage.getItem('last_data_content');
-
-            if (savedDataString !== currentDataString) {
-                // Если контент изменился - чистим ВСЕ блокировки
-                for (let key in localStorage) {
-                    if (key.startsWith('lck_')) {
-                        localStorage.removeItem(key);
-                    }
-                }
+            if (localStorage.getItem('last_data_content') !== currentDataString) {
+                for (let key in localStorage) { if (key.startsWith('lck_')) localStorage.removeItem(key); }
                 localStorage.setItem('last_data_content', currentDataString);
-                console.log("Данные обновлены, таймеры сброшены.");
             }
         }
 
@@ -199,60 +176,75 @@
             if (document.getElementById('passInput').value === PASS) {
                 localStorage.setItem('session', Date.now() + 3600000);
                 init();
-            } else { alert('Ошибка'); }
+            } else { alert('Нет доступа'); }
         }
 
         function init() {
-            autoResetCheck(); // Проверяем обновление перед запуском
+            autoResetCheck();
             const session = localStorage.getItem('session');
             if (session && Date.now() < parseInt(session)) {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
-                render();
+                renderNext();
             }
         }
 
-        function render() {
-            const container = document.getElementById('listContainer');
-            container.innerHTML = '';
+        let state = [0, 0]; 
+
+        function renderNext() {
+            const container = document.getElementById('accountDisplay');
+            const now = Date.now();
             
-            encryptedAccounts.forEach((acc, i) => {
+            // Ищем первый аккаунт, который НЕ в блоке
+            let nextIndex = -1;
+            for (let i = 0; i < encryptedAccounts.length; i++) {
                 const lock = localStorage.getItem(`lck_${i}`);
-                if (lock && Date.now() < parseInt(lock)) {
-                    container.innerHTML += `<div class="lock-card">АККАУНТ ИСПОЛЬЗОВАН (24Ч)</div>`;
-                } else {
-                    const nick = decode(acc[0]);
-                    const pass = decode(acc[1]);
-                    const card = document.createElement('div');
-                    card.className = 'account-card';
-                    card.innerHTML = `
-                        <div class="data-group">
-                            <span class="label">User</span>
-                            <div class="value">${nick}</div>
-                            <button class="btn" onclick="cp(this, ${i}, 0, '${nick}')">Ник</button>
-                        </div>
-                        <div class="data-group">
-                            <span class="label">Pass</span>
-                            <div class="value">••••••••</div>
-                            <button class="btn" onclick="cp(this, ${i}, 1, '${pass}')">Пароль</button>
-                        </div>
-                    `;
-                    container.appendChild(card);
+                if (!lock || now > parseInt(lock)) {
+                    nextIndex = i;
+                    break;
                 }
-            });
+            }
+
+            if (nextIndex === -1) {
+                container.innerHTML = `<div class="empty-state"><h3>Все аккаунты использованы</h3><p>Вернитесь через 24 часа</p></div>`;
+                return;
+            }
+
+            const nick = decode(encryptedAccounts[nextIndex][0]);
+            const pass = decode(encryptedAccounts[nextIndex][1]);
+            state = [0, 0];
+
+            container.innerHTML = `
+                <div class="account-card">
+                    <div style="margin-bottom: 25px;">
+                        <span class="label">Текущий аккаунт (#${nextIndex + 1})</span>
+                        <div class="value">${nick}</div>
+                        <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Копировать ник</button>
+                    </div>
+                    <div>
+                        <span class="label">Пароль</span>
+                        <div class="value">••••••••</div>
+                        <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Копировать пароль</button>
+                    </div>
+                    <div class="status-info">Скопируйте оба поля, чтобы перейти к следующему</div>
+                </div>
+            `;
         }
 
-        let state = {};
-        function cp(btn, row, type, txt) {
+        function cp(type, idx, txt) {
             navigator.clipboard.writeText(txt);
-            btn.innerText = 'OK';
+            const btn = document.getElementById(type === 'n' ? 'btn_n' : 'btn_p');
+            btn.innerText = 'СКОПИРОВАНО';
             btn.classList.add('success');
-            if (!state[row]) state[row] = [0, 0];
-            state[row][type] = 1;
             
-            if (state[row][0] && state[row][1]) {
-                localStorage.setItem(`lck_${row}`, Date.now() + LOCK_TIME);
-                setTimeout(render, 500);
+            if (type === 'n') state[0] = 1;
+            if (type === 'p') state[1] = 1;
+
+            if (state[0] && state[1]) {
+                localStorage.setItem(`lck_${idx}`, Date.now() + LOCK_TIME);
+                setTimeout(() => {
+                    renderNext();
+                }, 600);
             }
         }
 
