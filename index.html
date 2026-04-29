@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private Queue</title>
+    <title>Secure Queue v4.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
@@ -16,6 +16,9 @@
             --text-h: #f8fafc;
         }
 
+        /* ЗАЩИТА: При печати или создании скриншота через некоторые инструменты контент скроется */
+        @media print { body { display: none !important; } }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
@@ -25,6 +28,14 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            transition: filter 0.3s ease;
+        }
+
+        /* Экранирование при попытке скриншота (потеря фокуса) */
+        .screenshot-detected {
+            filter: brightness(0) !important;
+            background: black !important;
+            pointer-events: none;
         }
 
         #loginOverlay {
@@ -66,10 +77,7 @@
             display: none;
             width: 90%;
             max-width: 450px;
-            animation: fadeIn 0.5s ease;
         }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .account-card {
             background: var(--card-bg);
@@ -79,7 +87,7 @@
             text-align: center;
         }
 
-        .label { font-size: 11px; color: var(--text-p); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; display: block; }
+        .label { font-size: 11px; color: var(--text-p); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; display: block; }
         
         .value { 
             font-family: monospace; 
@@ -89,7 +97,6 @@
             font-size: 18px; 
             margin-bottom: 20px;
             color: var(--text-h);
-            border: 1px solid rgba(255,255,255,0.02);
         }
 
         .btn {
@@ -102,30 +109,20 @@
             cursor: pointer;
             width: 100%;
             text-transform: uppercase;
-            transition: 0.3s;
         }
 
         .btn.success { background: var(--success); }
 
-        .timer-val {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--danger);
-            display: block;
-            margin: 15px 0;
-            font-family: monospace;
-        }
-
         #qrcode { background: white; padding: 10px; border-radius: 12px; display: inline-block; margin-top: 20px; }
+        
+        .timer-val { font-size: 32px; font-weight: 800; color: var(--danger); display: block; margin: 15px 0; font-family: monospace; }
     </style>
 </head>
-<body>
-
-    <div id="loginOverlay">
+<body oncontextmenu="return false;"> <div id="loginOverlay">
         <div class="box">
-            <h2 style="margin-top:0">Доступ</h2>
+            <h2>Доступ</h2>
             <input type="password" id="passInput" placeholder="Код">
-            <button class="btn" onclick="checkPass()">Войти</button>
+            <button class="btn" onclick="checkPass()">Открыть</button>
             <div id="qrcode"></div>
         </div>
     </div>
@@ -138,10 +135,10 @@
     </div>
 
     <script>
-        // === НАСТРОЙКИ ===
+        const TG_TOKEN = "8417193861:AAGCpd-AFl7HW2_tNbzlVvXA7kxEz1NyESc";
+        const TG_CHAT_ID = "1209403544";
         const PASS = "1488";
-        const LOCK_TIME = 86400000; // 24 часа
-        const RESET_ID = "v2.1"; // ИЗМЕНИ ЭТО, ЕСЛИ ТАЙМЕРЫ НЕ СБРОСИЛИСЬ САМИ
+        const LOCK_TIME = 86400000;
 
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
@@ -161,6 +158,35 @@
             ["TWljaGFpbF9QcmVzc3VyZQ==", "TTdhUDBzVTJjRg=="]
         ];
 
+        // Функция отправки уведомления в Telegram
+        async function sendTgAlert(msg) {
+            try {
+                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🚨 ${msg}` })
+                });
+            } catch (e) { console.error("TG Error"); }
+        }
+
+        // Детектор скриншотов (через фокус и клавиши)
+        window.addEventListener('blur', () => {
+            document.body.classList.add('screenshot-detected');
+            sendTgAlert("Попытка скриншота или переключение окна! Экран заблокирован.");
+        });
+
+        window.addEventListener('focus', () => {
+            setTimeout(() => document.body.classList.remove('screenshot-detected'), 500);
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'PrintScreen') {
+                navigator.clipboard.writeText('Защищено системой');
+                sendTgAlert("Нажата клавиша PrintScreen!");
+                document.body.classList.add('screenshot-detected');
+            }
+        });
+
         function decode(str) { return decodeURIComponent(escape(atob(str))); }
 
         new QRCode(document.getElementById("qrcode"), {
@@ -168,26 +194,14 @@
             width: 100, height: 100
         });
 
-        function autoResetCheck() {
-            const currentHash = btoa(JSON.stringify(encryptedAccounts)) + RESET_ID;
-            if (localStorage.getItem('db_hash_v3') !== currentHash) {
-                // Полная очистка блокировок
-                for (let key in localStorage) {
-                    if (key.startsWith('lck_')) localStorage.removeItem(key);
-                }
-                localStorage.setItem('db_hash_v3', currentHash);
-            }
-        }
-
         function checkPass() {
             if (document.getElementById('passInput').value === PASS) {
                 localStorage.setItem('session', Date.now() + 3600000);
                 init();
-            } else { alert('Неверно'); }
+            } else { alert('Нет доступа'); }
         }
 
         function init() {
-            autoResetCheck();
             const session = localStorage.getItem('session');
             if (session && Date.now() < parseInt(session)) {
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -216,12 +230,11 @@
                 if (parseInt(lock) < minLockTime) minLockTime = parseInt(lock);
             }
 
-            // Если все заняты - показываем таймер до ближайшего разблока
             if (nextIndex === -1) {
                 container.innerHTML = `
                     <div class="account-card">
                         <span class="label">База пуста</span>
-                        <p>Следующий аккаунт будет доступен через:</p>
+                        <p>Доступ появится через:</p>
                         <span id="finalTimer" class="timer-val">00:00:00</span>
                     </div>
                 `;
@@ -252,16 +265,11 @@
         function startFinalCountdown(targetTime) {
             function update() {
                 const diff = targetTime - Date.now();
-                if (diff <= 0) {
-                    clearInterval(timerInterval);
-                    renderNext();
-                    return;
-                }
+                if (diff <= 0) { renderNext(); return; }
                 const h = Math.floor(diff / 3600000);
                 const m = Math.floor((diff % 3600000) / 60000);
                 const s = Math.floor((diff % 60000) / 1000);
-                document.getElementById('finalTimer').innerText = 
-                    `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                document.getElementById('finalTimer').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
             }
             update();
             timerInterval = setInterval(update, 1000);
@@ -270,12 +278,10 @@
         function cp(type, idx, txt) {
             navigator.clipboard.writeText(txt);
             const btn = document.getElementById(type === 'n' ? 'btn_n' : 'btn_p');
-            btn.innerText = 'ГОТОВО';
+            btn.innerText = 'OK';
             btn.classList.add('success');
-            
             if (type === 'n') state[0] = 1;
             if (type === 'p') state[1] = 1;
-
             if (state[0] && state[1]) {
                 localStorage.setItem(`lck_${idx}`, Date.now() + LOCK_TIME);
                 setTimeout(renderNext, 600);
