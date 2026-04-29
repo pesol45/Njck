@@ -3,94 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>База Аккаунтов (Полный Автомат)</title>
+    <title>Secure Base v3.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #ffffff;
-            --accent: #10b981;
-            --danger: #ef4444;
-            --text: #1e293b;
-        }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: var(--text); }
-        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
-        #loginOverlay input { padding: 15px; font-size: 20px; border-radius: 12px; border: 2px solid #334155; background: #1e293b; color: white; margin-bottom: 15px; text-align: center; outline: none; }
+        :root { --bg: #0b0e14; --card: #1e293b; --accent: #10b981; --danger: #ef4444; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        
+        #ipBlocker, #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; padding: 20px; text-align: center; }
+        
+        input { padding: 15px; font-size: 20px; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 15px; text-align: center; width: 220px; }
+        
         #content { display: none; width: 100%; max-width: 600px; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 25px; }
-        .account-card { background: var(--card); border-radius: 16px; margin-bottom: 16px; padding: 20px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .data-group { display: flex; flex-direction: column; gap: 8px; }
-        .label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 800; }
-        .value { font-family: monospace; font-size: 15px; background: #f1f5f9; padding: 10px; border-radius: 8px; overflow: hidden; }
-        .copy-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; color: #475569; }
-        .copy-btn:active { transform: translateY(2px); }
-        .copy-btn.success { background-color: var(--accent); color: white; border-color: var(--accent); }
-        .lock-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 16px; }
-        .timer-text { font-size: 22px; font-weight: 800; color: var(--danger); display: block; margin-top: 8px; }
+        .account-card { background: var(--card); border-radius: 16px; margin-bottom: 15px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        
+        .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 800; }
+        .value { font-family: monospace; background: #0f172a; padding: 10px; border-radius: 8px; margin: 5px 0; overflow: hidden; }
+        
+        button { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 15px; font-weight: bold; cursor: pointer; width: 100%; }
+        button:active { transform: scale(0.98); }
+        
+        #qrcode { background: white; padding: 10px; border-radius: 10px; margin-top: 20px; }
+        .lock-card { border: 1px dashed var(--danger); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; }
+    </small>
     </style>
 </head>
 <body>
 
+    <div id="ipBlocker" style="display:none;">
+        <h1 style="color: var(--danger);">ДОСТУП ЗАПРЕЩЕН</h1>
+        <p>Ваш IP не числится в белом списке.</p>
+        <p id="userIpDisplay" style="font-family: monospace; opacity: 0.6;"></p>
+    </div>
+
     <div id="loginOverlay">
-        <h2 style="color: white; margin-bottom: 20px;">Вход</h2>
-        <input type="password" id="passInput" placeholder="Пароль">
-        <button onclick="checkPass()" class="copy-btn" style="background: var(--accent); border: none; width: 230px; color: white;">ОТКРЫТЬ</button>
+        <h2>🔒 Введите ключ</h2>
+        <input type="password" id="passInput" placeholder="****">
+        <button onclick="checkPass()" style="width: 250px;">ВОЙТИ</button>
+        <div id="qrcode"></div>
+        <p style="font-size: 12px; opacity: 0.5; margin-top: 10px;">Сканируй QR для быстрого входа</p>
     </div>
 
     <div id="content">
-        <div class="header">
-            <h2 style="margin:0">Аккаунты</h2>
-            <button onclick="logout()" style="background:none; border:1px solid white; color:white; border-radius:5px; padding: 5px 10px; cursor:pointer;">Выход</button>
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>База (Crypto)</h2>
+            <button onclick="logout()" style="width: 80px; padding: 5px; font-size: 12px; background: #334155;">Выйти</button>
         </div>
         <div id="listContainer"></div>
     </div>
 
     <script>
-        const ACCESS_PASS = "1488";
-        const LOGIN_DURATION = 60 * 60 * 1000;
-        const LOCK_DURATION = 24 * 60 * 60 * 1000;
-
-        const accounts = [
-            ["Mihail_Arabov", "Q7cE2bN6sF"], ["Sok_YabIochniy", "R2tY7uA1jV"],
-            ["Leonel_Pepsi", "F9wE0rT5yA"], ["Absolute_Forbes", "A7kM9pR2xV"],
-            ["Kartoshka_Free", "D3jH7gK1sU"], ["VaIya_Grand", "S6vB0nM3kJ"],
-            ["Mahmood_Arbis", "V3cX9fD2sG"], ["Trippi_Troppi", "T5xQ8eW4zH"],
-            ["Mahmood_Mahmoodov", "H8uJ3mQ7pW"], ["Mihail_Absolute", "WfYmDt4UIi"],
-            ["Mahmood_Shovel", "K5oY1eR9tD"], ["Amethyst_Diamond", "X2zR5tW9q3"],
-            ["Mihail_Phillips", "C2mD8yJ3eQ"], ["TraIalelo_Tralala", "W4nR7tZ9xK"],
-            ["Michail_Pressure", "M7aP0sU2cF"]
+        // === НАСТРОЙКИ БЕЗОПАСНОСТИ ===
+        const ALLOWED_IP = "ВАШ_IP_ТУТ"; // Замени на свой IP (сайт подскажет его при ошибке)
+        const PASS = "1488";
+        
+        // Данные зашифрованы в Base64. В коде вместо ников — "абракадабра"
+        const encryptedAccounts = [
+            ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
+            ["U29rX1lhYklvY2huaXk=", "UjJ0WTd1QTFqVg=="],
+            ["TGVvbmVsX1BlcHNp", "Rjl3RTByVDV5QQ=="],
+            ["QWJzb2x1dGVfRm9yYmVz", "QTdrTTlwUjJ4Vg=="],
+            ["S2FydG9zaGthX0ZyZWU=", "RDNqSDdnSzFzVQ=="],
+            ["VmFJeWFfR3JhbmQ=", "UzZ2QjBuTTNrSg=="],
+            ["TWFobW9vZF9BcmJpcw==", "VjNjWDlmRDJzRw=="],
+            ["VHJpcHBpX1Ryb3BwaQ==", "VDV4UThlVzR6SA=="],
+            ["TWFobW9vZF9NYWhtb29kb3Y=", "SDh1SjNtUTdwVw=="],
+            ["TWloYWlsX0Fic29sdXRl", "V2ZZbUR0NFVJaQ=="],
+            ["TWFobW9vZF9TaG92ZWw=", "SzVvWTFlUjl0RA=="],
+            ["QW1ldGh5c3RfRGlhbW9uZA==", "WDJ6UjV0VzlxMw=="],
+            ["TWloYWlsX1BoaWxsaXBz", "QzJtRDh5SjNlUQ=="],
+            ["VHJhSWFsZWxvX1RyYWxhbGE=", "VzRuUjd0Wjl4Sw=="],
+            ["TWljaGFpbF9QcmVzc3VyZQ==", "TTdhUDBzVTJjRg=="]
         ];
 
-        let copyState = {};
+        // Дешифровка
+        function decode(str) { return decodeURIComponent(escape(atob(str))); }
 
-        // Функция создания уникального ключа на основе списка аккаунтов
-        function getAccountsHash() {
-            return btoa(JSON.stringify(accounts)).substring(0, 32);
-        }
+        // Проверка IP
+        async function checkIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                const userIp = data.ip;
+                document.getElementById('userIpDisplay').innerText = "Ваш IP: " + userIp;
 
-        // Авто-сброс если список изменился
-        function autoSync() {
-            const currentHash = getAccountsHash();
-            const savedHash = localStorage.getItem('db_hash');
-            
-            if (savedHash !== currentHash) {
-                // Список изменился — чистим старые блокировки
-                Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith('lock_')) localStorage.removeItem(key);
-                });
-                localStorage.setItem('db_hash', currentHash);
+                if (ALLOWED_IP !== "ВАШ_IP_ТУТ" && userIp !== ALLOWED_IP) {
+                    document.getElementById('ipBlocker').style.display = 'flex';
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.log("Ошибка проверки IP, пропускаем...");
+                return true;
             }
         }
 
+        // Генерация QR
+        new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 128,
+            height: 128,
+            colorDark : "#000000",
+            colorLight : "#ffffff"
+        });
+
         function checkPass() {
-            if (document.getElementById('passInput').value === ACCESS_PASS) {
-                localStorage.setItem('session_expiry', Date.now() + LOGIN_DURATION);
-                initApp();
-            } else { alert('Неверно!'); }
+            if (document.getElementById('passInput').value === PASS) {
+                localStorage.setItem('session', Date.now() + 3600000);
+                init();
+            } else { alert('Критическая ошибка доступа'); }
         }
 
-        function initApp() {
-            autoSync();
-            const session = localStorage.getItem('session_expiry');
+        async function init() {
+            const isIpOk = await checkIP();
+            if (!isIpOk) return;
+
+            const session = localStorage.getItem('session');
             if (session && Date.now() < parseInt(session)) {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
@@ -101,70 +129,56 @@
         function render() {
             const container = document.getElementById('listContainer');
             container.innerHTML = '';
-            const now = Date.now();
+            const hash = btoa(JSON.stringify(encryptedAccounts)).substring(0, 16);
+            
+            // Авто-сброс таймеров при изменении кода
+            if (localStorage.getItem('db_hash') !== hash) {
+                Object.keys(localStorage).forEach(k => k.startsWith('lck_') && localStorage.removeItem(k));
+                localStorage.setItem('db_hash', hash);
+            }
 
-            accounts.forEach((acc, index) => {
-                const lockTime = localStorage.getItem(`lock_${index}`);
-                if (lockTime && now < parseInt(lockTime)) {
-                    const div = document.createElement('div');
-                    div.className = 'lock-card';
-                    div.innerHTML = `Блокировка 24ч<br><span class="timer-text" id="time_${index}">${formatTime(parseInt(lockTime) - now)}</span>`;
-                    container.appendChild(div);
-                    startCountdown(index, lockTime);
+            encryptedAccounts.forEach((acc, i) => {
+                const lock = localStorage.getItem(`lck_${i}`);
+                if (lock && Date.now() < parseInt(lock)) {
+                    container.innerHTML += `<div class="lock-card">Аккаунт заблокирован на 24ч</div>`;
                 } else {
-                    const div = document.createElement('div');
-                    div.className = 'account-card';
-                    div.innerHTML = `
+                    const nick = decode(acc[0]);
+                    const pass = decode(acc[1]);
+                    const card = document.createElement('div');
+                    card.className = 'account-card';
+                    card.innerHTML = `
                         <div class="data-group">
-                            <span class="label">Ник</span>
-                            <div class="value">${acc[0]}</div>
-                            <button class="copy-btn" onclick="handleCopy(this, ${index}, 0, '${acc[0]}')">Копировать</button>
+                            <span class="label">User</span>
+                            <div class="value">${nick}</div>
+                            <button onclick="cp(this, ${i}, 0, '${nick}')">Ник</button>
                         </div>
                         <div class="data-group">
-                            <span class="label">Пароль</span>
-                            <div class="value">${acc[1]}</div>
-                            <button class="copy-btn" onclick="handleCopy(this, ${index}, 1, '${acc[1]}')">Копировать</button>
+                            <span class="label">Pass</span>
+                            <div class="value">********</div>
+                            <button onclick="cp(this, ${i}, 1, '${pass}')">Пароль</button>
                         </div>
                     `;
-                    container.appendChild(div);
+                    container.appendChild(card);
                 }
             });
         }
 
-        function handleCopy(btn, rowIndex, type, text) {
-            navigator.clipboard.writeText(text);
+        let state = {};
+        function cp(btn, row, type, txt) {
+            navigator.clipboard.writeText(txt);
             btn.innerText = '✅';
-            btn.classList.add('success');
-            if (!copyState[rowIndex]) copyState[rowIndex] = [false, false];
-            copyState[rowIndex][type] = true;
-            if (copyState[rowIndex][0] && copyState[rowIndex][1]) {
-                localStorage.setItem(`lock_${rowIndex}`, Date.now() + LOCK_DURATION);
+            btn.style.background = '#059669';
+            if (!state[row]) state[row] = [0, 0];
+            state[row][type] = 1;
+            if (state[row][0] && state[row][1]) {
+                localStorage.setItem(`lck_${row}`, Date.now() + 86400000);
                 setTimeout(render, 500);
             }
         }
 
-        function startCountdown(index, expiry) {
-            const timer = setInterval(() => {
-                const el = document.getElementById(`time_${index}`);
-                const diff = expiry - Date.now();
-                if (!el || diff <= 0) { clearInterval(timer); render(); }
-                else { el.innerText = formatTime(diff); }
-            }, 1000);
-        }
+        function logout() { localStorage.removeItem('session'); location.reload(); }
 
-        function formatTime(ms) {
-            const h = Math.floor(ms / 3600000);
-            const m = Math.floor((ms % 3600000) / 60000);
-            const s = Math.floor((ms % 60000) / 1000);
-            return `${h}ч ${m}м ${s}с`;
-        }
-
-        function logout() {
-            localStorage.removeItem('session_expiry');
-            location.reload();
-        }
-
-        initApp();
+        init();
     </script>
 </body>
 </html>
