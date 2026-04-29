@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аккаунты (раздельное копирование)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        table {
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #333;
+            color: white;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .cell-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .text-value {
+            font-family: monospace;
+            font-size: 15px;
+            color: #444;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #e1e4e8;
+            color: #24292e;
+            border: 1px solid rgba(27,31,35,.15);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        button:hover {
+            background-color: #0366d6;
+            color: white;
+            border-color: #0366d6;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        .copied {
+            background-color: #28a745 !important;
+            color: white !important;
+            border-color: #28a745 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Никнейм</th>
+                <th>Пароль</th>
+            </tr>
+        </thead>
+        <tbody>
+            <script>
+                // Данные для генерации таблицы
+                const accounts = [
+                    ["VaIya_Grand", "S6vB0nM3kJ"],
+                    ["Mahmood_Arbis", "V3cX9fD2sG"],
+                    ["Trippi_Troppi", "T5xQ8eW4zH"],
+                    ["Mahmood_Mahmoodov", "H8uJ3mQ7pW"],
+                    ["Mihail_Absolute", "WfYmDt4UIi"],
+                    ["Mahmood_Shovel", "K5oY1eR9tD"],
+                    ["Amethyst_Diamond", "X2zR5tW9q3"],
+                    ["Mihail_Phillips", "C2mD8yJ3eQ"],
+                    ["TraIalelo_Tralala", "W4nR7tZ9xK"],
+                    ["Michail_Pressure", "M7aP0sU2cF"]
+                ];
+
+                // Функция для создания строк таблицы
+                const tbody = document.querySelector('tbody');
+                accounts.forEach(acc => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="cell-content">
+                                <span class="text-value">${acc[0]}</span>
+                                <button onclick="copyText(this, '${acc[0]}')">Копировать</button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-content">
+                                <span class="text-value">${acc[1]}</span>
+                                <button onclick="copyText(this, '${acc[1]}')">Копировать</button>
+                            </div>
+                        </td>
+                    `;
+                    document.body.querySelector('tbody').appendChild(tr);
+                });
+
+                function copyText(btn, text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        const originalText = btn.innerText;
+                        btn.innerText = 'Скопировано!';
+                        btn.classList.add('copied');
+                        
+                        setTimeout(() => {
+                            btn.innerText = originalText;
+                            btn.classList.remove('copied');
+                        }, 1200);
+                    });
+                }
+            </script>
+        </tbody>
+    </table>
+
+</body>
+</html>
