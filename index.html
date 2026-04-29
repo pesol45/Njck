@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Queue Storage</title>
+    <title>Private Queue</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
@@ -89,6 +89,7 @@
             font-size: 18px; 
             margin-bottom: 20px;
             color: var(--text-h);
+            border: 1px solid rgba(255,255,255,0.02);
         }
 
         .btn {
@@ -106,22 +107,23 @@
 
         .btn.success { background: var(--success); }
 
-        .status-info {
-            margin-top: 20px;
-            font-size: 12px;
-            color: var(--text-p);
+        .timer-val {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--danger);
+            display: block;
+            margin: 15px 0;
+            font-family: monospace;
         }
 
         #qrcode { background: white; padding: 10px; border-radius: 12px; display: inline-block; margin-top: 20px; }
-        
-        .empty-state { text-align: center; color: var(--text-p); }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
         <div class="box">
-            <h2>Доступ</h2>
+            <h2 style="margin-top:0">Доступ</h2>
             <input type="password" id="passInput" placeholder="Код">
             <button class="btn" onclick="checkPass()">Войти</button>
             <div id="qrcode"></div>
@@ -131,13 +133,15 @@
     <div id="content">
         <div id="accountDisplay"></div>
         <div style="text-align: center; margin-top: 20px;">
-            <button class="btn" style="width:auto; background:#2d2d39; font-size:11px; padding: 8px 20px;" onclick="logout()">Выйти из базы</button>
+            <button class="btn" style="width:auto; background:#2d2d39; font-size:11px; padding: 8px 20px;" onclick="logout()">Выйти</button>
         </div>
     </div>
 
     <script>
+        // === НАСТРОЙКИ ===
         const PASS = "1488";
-        const LOCK_TIME = 86400000;
+        const LOCK_TIME = 86400000; // 24 часа
+        const RESET_ID = "v2.1"; // ИЗМЕНИ ЭТО, ЕСЛИ ТАЙМЕРЫ НЕ СБРОСИЛИСЬ САМИ
 
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
@@ -165,10 +169,13 @@
         });
 
         function autoResetCheck() {
-            const currentDataString = JSON.stringify(encryptedAccounts);
-            if (localStorage.getItem('last_data_content') !== currentDataString) {
-                for (let key in localStorage) { if (key.startsWith('lck_')) localStorage.removeItem(key); }
-                localStorage.setItem('last_data_content', currentDataString);
+            const currentHash = btoa(JSON.stringify(encryptedAccounts)) + RESET_ID;
+            if (localStorage.getItem('db_hash_v3') !== currentHash) {
+                // Полная очистка блокировок
+                for (let key in localStorage) {
+                    if (key.startsWith('lck_')) localStorage.removeItem(key);
+                }
+                localStorage.setItem('db_hash_v3', currentHash);
             }
         }
 
@@ -176,7 +183,7 @@
             if (document.getElementById('passInput').value === PASS) {
                 localStorage.setItem('session', Date.now() + 3600000);
                 init();
-            } else { alert('Нет доступа'); }
+            } else { alert('Неверно'); }
         }
 
         function init() {
@@ -189,24 +196,36 @@
             }
         }
 
-        let state = [0, 0]; 
+        let state = [0, 0];
+        let timerInterval = null;
 
         function renderNext() {
             const container = document.getElementById('accountDisplay');
-            const now = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
             
-            // Ищем первый аккаунт, который НЕ в блоке
+            const now = Date.now();
             let nextIndex = -1;
+            let minLockTime = Infinity;
+
             for (let i = 0; i < encryptedAccounts.length; i++) {
                 const lock = localStorage.getItem(`lck_${i}`);
                 if (!lock || now > parseInt(lock)) {
                     nextIndex = i;
                     break;
                 }
+                if (parseInt(lock) < minLockTime) minLockTime = parseInt(lock);
             }
 
+            // Если все заняты - показываем таймер до ближайшего разблока
             if (nextIndex === -1) {
-                container.innerHTML = `<div class="empty-state"><h3>Все аккаунты использованы</h3><p>Вернитесь через 24 часа</p></div>`;
+                container.innerHTML = `
+                    <div class="account-card">
+                        <span class="label">База пуста</span>
+                        <p>Следующий аккаунт будет доступен через:</p>
+                        <span id="finalTimer" class="timer-val">00:00:00</span>
+                    </div>
+                `;
+                startFinalCountdown(minLockTime);
                 return;
             }
 
@@ -217,24 +236,41 @@
             container.innerHTML = `
                 <div class="account-card">
                     <div style="margin-bottom: 25px;">
-                        <span class="label">Текущий аккаунт (#${nextIndex + 1})</span>
+                        <span class="label">Аккаунт #${nextIndex + 1}</span>
                         <div class="value">${nick}</div>
-                        <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Копировать ник</button>
+                        <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Ник</button>
                     </div>
                     <div>
                         <span class="label">Пароль</span>
                         <div class="value">••••••••</div>
-                        <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Копировать пароль</button>
+                        <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Пароль</button>
                     </div>
-                    <div class="status-info">Скопируйте оба поля, чтобы перейти к следующему</div>
                 </div>
             `;
+        }
+
+        function startFinalCountdown(targetTime) {
+            function update() {
+                const diff = targetTime - Date.now();
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    renderNext();
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                document.getElementById('finalTimer').innerText = 
+                    `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+            update();
+            timerInterval = setInterval(update, 1000);
         }
 
         function cp(type, idx, txt) {
             navigator.clipboard.writeText(txt);
             const btn = document.getElementById(type === 'n' ? 'btn_n' : 'btn_p');
-            btn.innerText = 'СКОПИРОВАНО';
+            btn.innerText = 'ГОТОВО';
             btn.classList.add('success');
             
             if (type === 'n') state[0] = 1;
@@ -242,9 +278,7 @@
 
             if (state[0] && state[1]) {
                 localStorage.setItem(`lck_${idx}`, Date.now() + LOCK_TIME);
-                setTimeout(() => {
-                    renderNext();
-                }, 600);
+                setTimeout(renderNext, 600);
             }
         }
 
