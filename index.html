@@ -3,166 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Удобная База Аккаунтов</title>
+    <title>База Аккаунтов (Полный Автомат)</title>
     <style>
         :root {
-            --primary-bg: #1a1a2e;
-            --card-bg: #ffffff;
-            --accent: #4ecca3;
-            --danger: #ff4b2b;
-            --text-main: #333;
-            --text-light: #999;
+            --bg: #0f172a;
+            --card: #ffffff;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --text: #1e293b;
         }
-
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--primary-bg);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        /* Авторизация */
-        #loginOverlay {
-            position: fixed;
-            inset: 0;
-            background: var(--primary-bg);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        #loginOverlay input {
-            padding: 15px;
-            font-size: 20px;
-            border-radius: 12px;
-            border: none;
-            margin-bottom: 15px;
-            width: 200px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        /* Контейнер */
-        #content {
-            display: none;
-            width: 100%;
-            max-width: 600px;
-            padding: 20px;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            margin-bottom: 20px;
-        }
-
-        /* Карточки строк */
-        .account-card {
-            background: var(--card-bg);
-            border-radius: 15px;
-            margin-bottom: 15px;
-            padding: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .data-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .label {
-            font-size: 12px;
-            color: var(--text-light);
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        .value {
-            font-family: 'Consolas', monospace;
-            font-size: 16px;
-            word-break: break-all;
-            margin-bottom: 5px;
-        }
-
-        /* Крупные кнопки */
-        .copy-btn {
-            background-color: #f0f2f5;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .copy-btn:active { transform: scale(0.95); }
-        .copy-btn.success {
-            background-color: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        /* Таймер */
-        .lock-card {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px dashed rgba(255, 255, 255, 0.3);
-            color: white;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .timer-text {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--danger);
-            display: block;
-            margin-top: 5px;
-        }
-
-        .logout-btn {
-            background: none;
-            border: 1px solid white;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            opacity: 0.7;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: var(--text); }
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        #loginOverlay input { padding: 15px; font-size: 20px; border-radius: 12px; border: 2px solid #334155; background: #1e293b; color: white; margin-bottom: 15px; text-align: center; outline: none; }
+        #content { display: none; width: 100%; max-width: 600px; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 25px; }
+        .account-card { background: var(--card); border-radius: 16px; margin-bottom: 16px; padding: 20px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .data-group { display: flex; flex-direction: column; gap: 8px; }
+        .label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 800; }
+        .value { font-family: monospace; font-size: 15px; background: #f1f5f9; padding: 10px; border-radius: 8px; overflow: hidden; }
+        .copy-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; color: #475569; }
+        .copy-btn:active { transform: translateY(2px); }
+        .copy-btn.success { background-color: var(--accent); color: white; border-color: var(--accent); }
+        .lock-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 16px; }
+        .timer-text { font-size: 22px; font-weight: 800; color: var(--danger); display: block; margin-top: 8px; }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
-        <h2 style="color: white; margin-bottom: 20px;">Доступ ограничен</h2>
+        <h2 style="color: white; margin-bottom: 20px;">Вход</h2>
         <input type="password" id="passInput" placeholder="Пароль">
-        <button onclick="checkPass()" class="copy-btn" style="background: var(--accent); border: none; width: 230px; color: white;">ВОЙТИ</button>
+        <button onclick="checkPass()" class="copy-btn" style="background: var(--accent); border: none; width: 230px; color: white;">ОТКРЫТЬ</button>
     </div>
 
     <div id="content">
         <div class="header">
-            <h3>Список аккаунтов</h3>
-            <button class="logout-btn" onclick="logout()">Выйти</button>
+            <h2 style="margin:0">Аккаунты</h2>
+            <button onclick="logout()" style="background:none; border:1px solid white; color:white; border-radius:5px; padding: 5px 10px; cursor:pointer;">Выход</button>
         </div>
         <div id="listContainer"></div>
     </div>
@@ -185,6 +62,25 @@
 
         let copyState = {};
 
+        // Функция создания уникального ключа на основе списка аккаунтов
+        function getAccountsHash() {
+            return btoa(JSON.stringify(accounts)).substring(0, 32);
+        }
+
+        // Авто-сброс если список изменился
+        function autoSync() {
+            const currentHash = getAccountsHash();
+            const savedHash = localStorage.getItem('db_hash');
+            
+            if (savedHash !== currentHash) {
+                // Список изменился — чистим старые блокировки
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('lock_')) localStorage.removeItem(key);
+                });
+                localStorage.setItem('db_hash', currentHash);
+            }
+        }
+
         function checkPass() {
             if (document.getElementById('passInput').value === ACCESS_PASS) {
                 localStorage.setItem('session_expiry', Date.now() + LOGIN_DURATION);
@@ -193,6 +89,7 @@
         }
 
         function initApp() {
+            autoSync();
             const session = localStorage.getItem('session_expiry');
             if (session && Date.now() < parseInt(session)) {
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -208,11 +105,10 @@
 
             accounts.forEach((acc, index) => {
                 const lockTime = localStorage.getItem(`lock_${index}`);
-                
                 if (lockTime && now < parseInt(lockTime)) {
                     const div = document.createElement('div');
                     div.className = 'lock-card';
-                    div.innerHTML = `Аккаунт скрыт. Вернется через:<br><span class="timer-text" id="time_${index}">${formatTime(parseInt(lockTime) - now)}</span>`;
+                    div.innerHTML = `Блокировка 24ч<br><span class="timer-text" id="time_${index}">${formatTime(parseInt(lockTime) - now)}</span>`;
                     container.appendChild(div);
                     startCountdown(index, lockTime);
                 } else {
@@ -221,12 +117,12 @@
                     div.innerHTML = `
                         <div class="data-group">
                             <span class="label">Ник</span>
-                            <span class="value">${acc[0]}</span>
+                            <div class="value">${acc[0]}</div>
                             <button class="copy-btn" onclick="handleCopy(this, ${index}, 0, '${acc[0]}')">Копировать</button>
                         </div>
                         <div class="data-group">
                             <span class="label">Пароль</span>
-                            <span class="value">${acc[1]}</span>
+                            <div class="value">${acc[1]}</div>
                             <button class="copy-btn" onclick="handleCopy(this, ${index}, 1, '${acc[1]}')">Копировать</button>
                         </div>
                     `;
@@ -237,15 +133,13 @@
 
         function handleCopy(btn, rowIndex, type, text) {
             navigator.clipboard.writeText(text);
-            btn.innerText = 'ГОТОВО';
+            btn.innerText = '✅';
             btn.classList.add('success');
-
             if (!copyState[rowIndex]) copyState[rowIndex] = [false, false];
             copyState[rowIndex][type] = true;
-
             if (copyState[rowIndex][0] && copyState[rowIndex][1]) {
                 localStorage.setItem(`lock_${rowIndex}`, Date.now() + LOCK_DURATION);
-                setTimeout(render, 600);
+                setTimeout(render, 500);
             }
         }
 
