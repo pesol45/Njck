@@ -3,139 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аккаунты (раздельное копирование)</title>
+    <title>Приватная База</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: #f0f2f5;
             display: flex;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 20px;
             margin: 0;
         }
+        /* Окно входа */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #loginOverlay input {
+            padding: 12px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        /* Таблица */
+        #content { display: none; width: 100%; max-width: 800px; }
         table {
             border-collapse: collapse;
             background: white;
-            border-radius: 8px;
+            width: 100%;
+            border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 800px;
         }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background-color: #333;
-            color: white;
-            text-transform: uppercase;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-        tr:last-child td {
-            border-bottom: none;
-        }
-        .cell-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        .text-value {
-            font-family: monospace;
-            font-size: 15px;
-            color: #444;
-        }
+        th, td { padding: 15px; border: 1px solid #eee; text-align: left; }
+        th { background: #333; color: white; }
+        .cell-content { display: flex; justify-content: space-between; align-items: center; }
         button {
-            padding: 5px 10px;
             cursor: pointer;
-            background-color: #e1e4e8;
-            color: #24292e;
-            border: 1px solid rgba(27,31,35,.15);
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.2s;
-            white-space: nowrap;
+            padding: 6px 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-weight: bold;
         }
-        button:hover {
-            background-color: #0366d6;
-            color: white;
-            border-color: #0366d6;
-        }
-        button:active {
-            transform: translateY(1px);
-        }
-        .copied {
-            background-color: #28a745 !important;
-            color: white !important;
-            border-color: #28a745 !important;
+        button.copied { background-color: #28a745; color: white; border-color: #28a745; }
+        .timer-active {
+            color: #d9534f;
+            font-weight: bold;
+            text-align: center;
+            background-color: #fff5f5;
         }
     </style>
 </head>
 <body>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Никнейм</th>
-                <th>Пароль</th>
-            </tr>
-        </thead>
-        <tbody>
-            <script>
-                // Данные для генерации таблицы
-                const accounts = [
-                    ["VaIya_Grand", "S6vB0nM3kJ"],
-                    ["Mahmood_Arbis", "V3cX9fD2sG"],
-                    ["Trippi_Troppi", "T5xQ8eW4zH"],
-                    ["Mahmood_Mahmoodov", "H8uJ3mQ7pW"],
-                    ["Mihail_Absolute", "WfYmDt4UIi"],
-                    ["Mahmood_Shovel", "K5oY1eR9tD"],
-                    ["Amethyst_Diamond", "X2zR5tW9q3"],
-                    ["Mihail_Phillips", "C2mD8yJ3eQ"],
-                    ["TraIalelo_Tralala", "W4nR7tZ9xK"],
-                    ["Michail_Pressure", "M7aP0sU2cF"]
-                ];
+    <div id="loginOverlay">
+        <h2 style="color: white;">Введите пароль</h2>
+        <input type="password" id="passInput" placeholder="****">
+        <button onclick="checkPass()" style="padding: 10px 20px;">Войти</button>
+    </div>
 
-                // Функция для создания строк таблицы
-                const tbody = document.querySelector('tbody');
-                accounts.forEach(acc => {
-                    const tr = document.createElement('tr');
+    <div id="content">
+        <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <strong>База данных</strong>
+            <button onclick="logout()" style="font-size: 10px;">Выйти</button>
+        </div>
+        <table id="accTable">
+            <thead>
+                <tr>
+                    <th>Никнейм</th>
+                    <th>Пароль</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const ACCESS_PASS = "1488";
+        const LOGIN_DURATION = 60 * 60 * 1000; // 1 час в мс
+        const LOCK_DURATION = 24 * 60 * 60 * 1000; // 24 часа в мс
+
+        const accounts = [
+            ["Mihail_Arabov", "Q7cE2bN6sF"], ["Sok_YabIochniy", "R2tY7uA1jV"],
+            ["Leonel_Pepsi", "F9wE0rT5yA"], ["Absolute_Forbes", "A7kM9pR2xV"],
+            ["Kartoshka_Free", "D3jH7gK1sU"], ["VaIya_Grand", "S6vB0nM3kJ"],
+            ["Mahmood_Arbis", "V3cX9fD2sG"], ["Trippi_Troppi", "T5xQ8eW4zH"],
+            ["Mahmood_Mahmoodov", "H8uJ3mQ7pW"], ["Mihail_Absolute", "WfYmDt4UIi"],
+            ["Mahmood_Shovel", "K5oY1eR9tD"], ["Amethyst_Diamond", "X2zR5tW9q3"],
+            ["Mihail_Phillips", "C2mD8yJ3eQ"], ["TraIalelo_Tralala", "W4nR7tZ9xK"],
+            ["Michail_Pressure", "M7aP0sU2cF"]
+        ];
+
+        let copyState = {};
+
+        // Проверка пароля
+        function checkPass() {
+            const val = document.getElementById('passInput').value;
+            if (val === ACCESS_PASS) {
+                const expiry = Date.now() + LOGIN_DURATION;
+                localStorage.setItem('session_expiry', expiry);
+                initApp();
+            } else {
+                alert('Неверный пароль!');
+            }
+        }
+
+        // Проверка сессии при загрузке
+        function initApp() {
+            const session = localStorage.getItem('session_expiry');
+            if (session && Date.now() < parseInt(session)) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                renderTable();
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('content').style.display = 'none';
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.querySelector('#accTable tbody');
+            tbody.innerHTML = '';
+            const now = Date.now();
+
+            accounts.forEach((acc, index) => {
+                const tr = document.createElement('tr');
+                const lockTime = localStorage.getItem(`lock_${index}`);
+
+                if (lockTime && now < parseInt(lockTime)) {
+                    const timeLeft = parseInt(lockTime) - now;
+                    tr.innerHTML = `<td colspan="2" class="timer-active">Заблокировано: <span id="time_${index}">${formatTime(timeLeft)}</span></td>`;
+                    startCountdown(index, lockTime);
+                } else {
                     tr.innerHTML = `
                         <td>
                             <div class="cell-content">
-                                <span class="text-value">${acc[0]}</span>
-                                <button onclick="copyText(this, '${acc[0]}')">Копировать</button>
+                                <span>${acc[0]}</span>
+                                <button onclick="handleCopy(this, ${index}, 0, '${acc[0]}')">Ник</button>
                             </div>
                         </td>
                         <td>
                             <div class="cell-content">
-                                <span class="text-value">${acc[1]}</span>
-                                <button onclick="copyText(this, '${acc[1]}')">Копировать</button>
+                                <span>${acc[1]}</span>
+                                <button onclick="handleCopy(this, ${index}, 1, '${acc[1]}')">Пароль</button>
                             </div>
                         </td>
                     `;
-                    document.body.querySelector('tbody').appendChild(tr);
-                });
-
-                function copyText(btn, text) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        const originalText = btn.innerText;
-                        btn.innerText = 'Скопировано!';
-                        btn.classList.add('copied');
-                        
-                        setTimeout(() => {
-                            btn.innerText = originalText;
-                            btn.classList.remove('copied');
-                        }, 1200);
-                    });
                 }
-            </script>
-        </tbody>
-    </table>
+                tbody.appendChild(tr);
+            });
+        }
 
+        function handleCopy(btn, rowIndex, type, text) {
+            navigator.clipboard.writeText(text);
+            btn.innerText = '✅';
+            btn.classList.add('copied');
+
+            if (!copyState[rowIndex]) copyState[rowIndex] = [false, false];
+            copyState[rowIndex][type] = true;
+
+            if (copyState[rowIndex][0] && copyState[rowIndex][1]) {
+                localStorage.setItem(`lock_${rowIndex}`, Date.now() + LOCK_DURATION);
+                setTimeout(renderTable, 500);
+            }
+        }
+
+        function startCountdown(index, expiry) {
+            const interval = setInterval(() => {
+                const el = document.getElementById(`time_${index}`);
+                const now = Date.now();
+                if (!el || now >= expiry) {
+                    clearInterval(interval);
+                    renderTable();
+                } else {
+                    el.innerText = formatTime(expiry - now);
+                }
+            }, 1000);
+        }
+
+        function formatTime(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return `${h}ч ${m}м ${s}с`;
+        }
+
+        function logout() {
+            localStorage.removeItem('session_expiry');
+            location.reload();
+        }
+
+        // Запуск проверки
+        initApp();
+    </script>
 </body>
 </html>
