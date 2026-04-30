@@ -3,127 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Quantum Queue v7.0 — Light</title>
+    <title>Liquid Queue | Минимализм</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
-            user-select: none; /* легкая защита от выделения, не ломает копирование */
+            user-select: none; /* лёгкая защита от выделения, но копирование работает */
         }
+
+        /* Глубокая нейтральная палитра, без неона, приглушенные тона */
         :root {
-            --bg: #050507;
-            --card-bg: rgba(20, 20, 25, 0.92);
-            --accent: linear-gradient(135deg, #00f2fe, #4facfe);
-            --success: #00e676;
-            --danger: #ff1744;
-            --text-p: #8899a6;
-            --text-h: #ffffff;
-            --border: rgba(255, 255, 255, 0.08);
+            --bg-depth: #0a0a0c;
+            --glass-base: rgba(22, 22, 28, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.03);
+            --text-primary: #eef2f5;
+            --text-secondary: #9aa7b5;
+            --accent-soft: #5c6f87;
+            --accent-hover: #6f85a2;
+            --danger-soft: #b45a6b;
+            --success-soft: #5f8a6f;
+            --shadow-soft: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
         }
 
         body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, #111118, #050508);
             font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-            background-color: var(--bg); color: var(--text-h);
-            display: flex; justify-content: center; align-items: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             overflow: hidden;
+            color: var(--text-primary);
         }
 
-        #bg-canvas { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: -1; opacity: 0; transition: opacity 1.2s ease;
+        /* жидкий стеклянный фон (динамический canvas) */
+        #liquid-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.4;
             pointer-events: none;
+            transition: opacity 1s ease;
         }
 
-        .container { z-index: 10; width: 90%; max-width: 440px; transition: 0.3s ease; }
-
-        /* Общий стиль карточек */
-        .box {
-            background: var(--card-bg); padding: 32px 28px; border-radius: 32px; text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); border: 1px solid var(--border);
-            backdrop-filter: blur(12px);
+        .container {
+            z-index: 10;
+            width: 92%;
+            max-width: 460px;
+            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
 
-        input {
-            padding: 16px; font-size: 18px; border-radius: 20px; border: 1px solid #2d2d39;
-            background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; width: 100%;
-            box-sizing: border-box; text-align: center; outline: none; transition: 0.2s;
-            letter-spacing: 0.5px;
+        /* Стеклянная карточка — эффект жидкого стекла (размытие, тонкие градиенты) */
+        .glass-card {
+            background: var(--glass-base);
+            backdrop-filter: blur(18px) saturate(180%);
+            border-radius: 38px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-soft), inset 0 1px 0 var(--glass-highlight);
+            padding: 32px 28px;
+            transition: transform 0.2s ease, box-shadow 0.2s;
         }
-        input:focus { border-color: #00f2fe; box-shadow: 0 0 12px rgba(0,242,254,0.3); }
 
+        /* минималистичные поля ввода */
+        .input-field {
+            width: 100%;
+            padding: 16px 18px;
+            font-size: 17px;
+            font-weight: 450;
+            background: rgba(10, 10, 14, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 44px;
+            color: white;
+            text-align: center;
+            outline: none;
+            transition: 0.2s;
+            letter-spacing: -0.2px;
+            backdrop-filter: blur(4px);
+        }
+
+        .input-field:focus {
+            border-color: rgba(130, 150, 180, 0.7);
+            background: rgba(15, 15, 22, 0.8);
+            box-shadow: 0 0 0 2px rgba(92, 111, 135, 0.3);
+        }
+
+        /* кнопки — плоские, стеклянные, без неона */
         .btn {
-            background: var(--accent); color: white; border: none; border-radius: 40px;
-            padding: 14px; font-weight: 700; cursor: pointer; width: 100%;
-            text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s;
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 44px;
+            font-weight: 550;
             font-size: 15px;
-        }
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.02); box-shadow: 0 6px 14px rgba(0,242,254,0.25); }
-        .btn.secondary { background: #1e1e28; color: #aab2c1; border: 1px solid var(--border); }
-        .btn.danger { background: var(--danger); }
-        .btn.success-bg { background: var(--success); color: #000; }
-
-        /* Панель аккаунтов */
-        .account-card {
-            background: var(--card-bg); border-radius: 32px; padding: 28px 20px;
-            border: 1px solid var(--border); text-align: center; margin-bottom: 15px;
+            border: none;
+            background: rgba(45, 55, 70, 0.7);
             backdrop-filter: blur(8px);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+            letter-spacing: 0.2px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .label { font-size: 11px; color: var(--text-p); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; display: block; letter-spacing: 1px; }
-        .value { font-family: 'Fira Mono', monospace; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 20px; font-size: 16px; margin-bottom: 15px; border: 1px solid var(--border); word-break: break-all; }
+        .btn-primary {
+            background: rgba(80, 100, 120, 0.75);
+            color: white;
+        }
 
-        /* Админка (упрощена) */
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 24px; }
-        .stat-val { color: var(--text-h); font-weight: 700; }
+        .btn-primary:hover {
+            background: rgba(100, 120, 145, 0.85);
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
 
-        .timer-val { font-size: 34px; font-weight: 800; color: var(--danger); display: block; margin: 15px 0; font-family: monospace; text-shadow: 0 0 8px rgba(255,23,68,0.5); letter-spacing: 2px; }
-        
-        .flex-buttons { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
-        .flex-buttons .btn { flex: 1; margin-bottom: 0; }
+        .btn-secondary {
+            background: rgba(32, 36, 44, 0.8);
+            color: #bcc9d6;
+        }
 
-        #accountDisplay .btn { margin-top: 4px; margin-bottom: 12px; width: 80%; }
+        .btn-secondary:hover {
+            background: rgba(48, 54, 66, 0.9);
+            color: #e0e8f0;
+        }
+
+        .btn-danger {
+            background: rgba(130, 70, 80, 0.7);
+            color: #ffcfd4;
+        }
+
+        .btn-danger:hover {
+            background: rgba(155, 85, 100, 0.85);
+        }
+
+        .btn-success {
+            background: rgba(70, 110, 90, 0.7);
+            color: #dcfce8;
+        }
+
+        /* карточка аккаунта */
+        .account-card {
+            background: rgba(18, 20, 26, 0.65);
+            backdrop-filter: blur(20px);
+            border-radius: 38px;
+            padding: 28px 22px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.2s;
+        }
+
+        .label-micro {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .value-block {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 14px 12px;
+            border-radius: 28px;
+            font-size: 15px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            word-break: break-all;
+            text-align: center;
+            letter-spacing: 0.2px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .flex-row .btn {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        /* статистика для админки (минимальная) */
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .stat-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .timer-large {
+            font-family: monospace;
+            font-size: 36px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            background: rgba(0,0,0,0.3);
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 60px;
+            margin-top: 12px;
+            color: #e2c2b5;
+        }
+
+        hr {
+            border: 0.5px solid rgba(255,255,255,0.05);
+            margin: 18px 0;
+        }
+
+        /* убираем эмодзи в кнопках через before / content не добавляем, просто текст */
+        button i, .no-emoji {
+            font-style: normal;
+        }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-    <canvas id="bg-canvas"></canvas>
+    <canvas id="liquid-canvas"></canvas>
 
-    <!-- ЭКРАН ЛОГИНА -->
+    <!-- Логин оверлей -->
     <div id="loginOverlay" class="container">
-        <div class="box">
-            <h2 style="margin-top:0; letter-spacing: -0.5px;">⚡ Quantum Queue</h2>
-            <p style="color: #9aaebf; font-size: 13px; margin-bottom: 24px;">Введите код доступа</p>
-            <input type="password" id="passInput" placeholder="Код доступа" autocomplete="off">
-            <button class="btn" id="loginBtn" onclick="checkPass()">Войти</button>
-            <button class="btn secondary" id="requestBtn" onclick="sendAuthCodes()">📲 Запросить коды в Telegram</button>
+        <div class="glass-card">
+            <h2 style="font-weight: 500; font-size: 1.8rem; letter-spacing: -0.5px; margin-bottom: 6px;">Liquid Queue</h2>
+            <p style="color: #9aa7b5; font-size: 13px; margin-bottom: 28px;">доступ по коду</p>
+            <input type="password" id="passInput" class="input-field" placeholder="код доступа" autocomplete="off">
+            <button class="btn btn-primary" id="loginBtn" onclick="checkPass()">Вход</button>
+            <button class="btn btn-secondary" id="requestBtn" onclick="sendAuthCodes()">Запросить коды</button>
         </div>
     </div>
 
-    <!-- УПРОЩЕННАЯ АДМИН ПАНЕЛЬ (без пинга, глобалки и кнопки закрыть) -->
+    <!-- Админ панель (упрощённая, без пинга и глобалки) -->
     <div id="adminPanel" class="container" style="display: none;">
-        <div class="box">
-            <h2 style="margin-top:0; color: #00f2fe;">🛡️ Admin Panel</h2>
-            <div class="stat-row"><span>📦 Всего аккаунтов:</span><span class="stat-val" id="totalAccs">0</span></div>
-            <div class="stat-row"><span>⏳ Заблокировано сегодня:</span><span class="stat-val" id="usedAccs">0</span></div>
-            <p style="font-size: 11px; color: #5f6c7a; margin-top: 20px;">сброс локов по спец-коду (6 цифр)</p>
+        <div class="glass-card">
+            <h3 style="font-weight: 460; letter-spacing: -0.2px;">Управление</h3>
+            <div class="stat-line"><span>Всего аккаунтов</span><span class="stat-value" id="totalAccs">0</span></div>
+            <div class="stat-line"><span>Заблокировано</span><span class="stat-value" id="usedAccs">0</span></div>
+            <hr>
+            <p style="font-size: 12px; color: #8f9bb3;">код сброса (6 цифр) — через телеграм</p>
         </div>
     </div>
 
-    <!-- ОСНОВНОЕ МЕНЮ ОЧЕРЕДИ -->
+    <!-- Основная очередь -->
     <div id="content" class="container" style="display: none;">
         <div id="accountDisplay"></div>
-        <div style="text-align: center; margin-top: 12px;">
-            <button class="btn secondary" style="width: auto; background: #1a1a22; padding: 8px 28px;" onclick="logout()">🔒 Выйти</button>
+        <div style="text-align: center; margin-top: 8px;">
+            <button class="btn btn-secondary" style="width: auto; padding: 8px 28px; background: rgba(28,30,36,0.8);" onclick="logout()">Выйти</button>
         </div>
     </div>
 
     <script>
-        // ------------------- КОНФИГУРАЦИЯ -------------------
+        // ---------- КОНФИГ ----------
         const TG_TOKEN = "8417193861:AAGCpd-AFl7HW2_tNbzlVvXA7kxEz1NyESc";
         const TG_CHAT_ID = "1209403544";
-        const LOCK_TIME = 86400000; // 24 часа в мс
+        const LOCK_TIME = 86400000;
 
-        // Зашифрованные аккаунты (base64)
+        // зашифрованные данные (15 аккаунтов)
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="], ["U29rX1lhYklvY2huaXk=", "UjJ0WTd1QTFqVg=="],
             ["TGVvbmVsX1BlcHNp", "Rjl3RTByVDV5QQ=="], ["QWJzb2x1dGVfRm9yYmVz", "QTdrTTlwUjJ4Vg=="],
@@ -135,100 +280,100 @@
             ["TWljaGFpbF9QcmVzc3VyZQ==", "TTdhUDBzVTJjRg=="]
         ];
 
-        // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
-        function decode(str) { 
-            try {
-                return decodeURIComponent(escape(atob(str))); 
-            } catch(e) { return "Ошибка декода"; }
-        }
-
-        // ---------- АНИМИРОВАННЫЙ ФОН (ЧАСТИЦЫ) ----------
-        let canvas, ctx, particles = [], animationId = null;
-        
-        function initCanvas() {
-            canvas = document.getElementById('bg-canvas');
-            if(!canvas) return;
+        // ---------- ЭФФЕКТ ЖИДКОГО СТЕКЛА (динамические волны/частицы) ----------
+        let canvas, ctx, particles = [], animFrame;
+        function initLiquidBg() {
+            canvas = document.getElementById('liquid-canvas');
+            if (!canvas) return;
             ctx = canvas.getContext('2d');
-            const resizeCanvas = () => {
+            let width = window.innerWidth, height = window.innerHeight;
+            
+            function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
+                width = canvas.width;
+                height = canvas.height;
+                // мягкие жидкие частицы
                 particles = [];
-                for(let i = 0; i < 60; i++) {
+                const particleCount = Math.min(70, Math.floor(width * height / 18000));
+                for (let i = 0; i < particleCount; i++) {
                     particles.push({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
-                        vx: (Math.random() - 0.5) * 0.6,
-                        vy: (Math.random() - 0.5) * 0.6,
-                        size: Math.random() * 2.5 + 0.8
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        vx: (Math.random() - 0.5) * 0.35,
+                        vy: (Math.random() - 0.5) * 0.25,
+                        radius: Math.random() * 3 + 1.2,
+                        alpha: Math.random() * 0.3 + 0.1
                     });
                 }
-            };
+            }
+            
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
             
-            function draw() {
-                if(!ctx) return;
+            function drawLiquid() {
+                if (!ctx) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'rgba(0, 212, 255, 0.4)';
-                for(let p of particles) {
+                // градиентная заливка подложки - текучая
+                ctx.fillStyle = 'rgba(8, 8, 14, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                for (let p of particles) {
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(140, 170, 200, ${p.alpha * 0.6})`;
                     ctx.fill();
+                    // движение
                     p.x += p.vx;
                     p.y += p.vy;
-                    if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
-                    if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
-                    p.x = Math.min(Math.max(p.x, 0), canvas.width);
-                    p.y = Math.min(Math.max(p.y, 0), canvas.height);
+                    if (p.x < -20) p.x = canvas.width + 10;
+                    if (p.x > canvas.width + 20) p.x = -20;
+                    if (p.y < -20) p.y = canvas.height + 10;
+                    if (p.y > canvas.height + 20) p.y = -20;
                 }
-                animationId = requestAnimationFrame(draw);
+                animFrame = requestAnimationFrame(drawLiquid);
             }
-            draw();
+            drawLiquid();
         }
 
-        function activateBg() {
-            const bgCanvas = document.getElementById('bg-canvas');
-            if(bgCanvas) bgCanvas.style.opacity = '1';
-            if(!canvas) initCanvas();
+        function activateLiquid() {
+            const canvasEl = document.getElementById('liquid-canvas');
+            if (canvasEl) canvasEl.style.opacity = '0.75';
+            if (!canvas) initLiquidBg();
         }
 
-        // ---------- РАБОТА С TG И КОДАМИ ----------
+        // ---------- УТИЛИТЫ ДЕКОДИНГА ----------
+        function decode(str) {
+            try { return decodeURIComponent(escape(atob(str))); } catch(e) { return "ошибка"; }
+        }
+
+        // ---------- ОТПРАВКА КОДОВ ТГ ----------
         async function sendAuthCodes() {
             const btn = document.getElementById('requestBtn');
-            if(!btn) return;
+            if (!btn) return;
             const loginCode = Math.floor(1000 + Math.random() * 9000).toString();
             const resetCode = Math.floor(100000 + Math.random() * 899999).toString();
             sessionStorage.setItem('temp_login_code', loginCode);
             sessionStorage.setItem('temp_reset_code', resetCode);
-            const originalText = btn.innerText;
-            btn.innerText = "⏳ Отправка...";
+            btn.innerText = "отправка...";
             btn.disabled = true;
             try {
-                const response = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        chat_id: TG_CHAT_ID, 
-                        text: `🔐 Quantum Queue\n🟢 Код входа: ${loginCode}\n🔴 Код сброса всех таймеров: ${resetCode}\n---` 
-                    })
+                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🔹 Liquid Queue\nВход: ${loginCode}\nСброс локов: ${resetCode}` })
                 });
-                if(response.ok) btn.innerText = "✅ Коды в TG";
-                else btn.innerText = "❌ Ошибка";
-            } catch (e) {
-                console.warn(e);
-                btn.innerText = "⚠️ Ошибка сети";
-            }
-            setTimeout(() => { if(btn) { btn.innerText = "📲 Коды в Telegram"; btn.disabled = false; } }, 2500);
+                btn.innerText = "коды отправлены";
+            } catch(e) { btn.innerText = "ошибка"; }
+            setTimeout(() => { if(btn) { btn.innerText = "Запросить коды"; btn.disabled = false; } }, 2200);
         }
 
-        // ---------- ПРОВЕРКА ВХОДА (УДАЛЕН МАСТЕР-ПАРОЛЬ 1.1) ----------
+        // ---------- ПРОВЕРКА ВХОДА (без мастер-пароля) ----------
         function checkPass() {
-            const inputField = document.getElementById('passInput');
-            const input = inputField.value.trim();
+            const input = document.getElementById('passInput').value.trim();
             const tempLogin = sessionStorage.getItem('temp_login_code');
             const tempReset = sessionStorage.getItem('temp_reset_code');
 
-            // 1. СБРОС ЛОКОВ (код сброса) — оставляем
+            // сброс всех таймеров через специальный код
             if (tempReset && input === tempReset) {
                 let removed = 0;
                 for (let i = 0; i < encryptedAccounts.length; i++) {
@@ -238,224 +383,188 @@
                     }
                 }
                 sessionStorage.removeItem('temp_reset_code');
-                alert(`✅ Сброшено ${removed} блокировок. Все аккаунты разблокированы.`);
+                alert(`Сброшено блокировок: ${removed}`);
                 location.reload();
                 return;
             }
-            
-            // 2. Обычный временный код входа (единственный способ)
+
+            // обычный вход по временному коду
             if (tempLogin && input === tempLogin) {
-                activateBg();
-                localStorage.setItem('session', Date.now() + 3600000); // 1 час сессия
+                activateLiquid();
+                localStorage.setItem('session', Date.now() + 3600000);
                 sessionStorage.removeItem('temp_login_code');
                 initUserSession();
             } else {
-                alert("❌ Неверный код доступа!");
-                inputField.value = '';
+                alert("Неверный код");
+                document.getElementById('passInput').value = '';
             }
         }
 
-        // Инициализация пользовательской очереди
         function initUserSession() {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             renderNextAccount();
         }
 
-        // Упрощенная админ-панель (открывается только через код сброса? нет, теперь мастер-пароль удален)
-        // Для доступа к админке нужно использовать специальный код: 1488 больше НЕ РАБОТАЕТ.
-        // Но если нужно показать админку — сейчас она не открывается без мастер-пароля, это ок.
-        // Удаляем функционал полностью: showAdminPanel не вызывается нигде.
-        
-        // Обновление статистики используется только внутри админ-панели, но админ-панель недоступна.
-        // Оставим функцию updateUsedStats для возможного расширения. Она нигде не вызывается.
-        function updateUsedStats() {
+        // админ панель больше не открывается (мастер-пароль удален) 
+        // но если надо статистику — она не показывается, но просто оставим функцию для обновления, но не используется
+        function showAdminPanel() {} // полностью отключено
+
+        // обновление статистики (для потенциального использования, но админка не показывается)
+        function updateStats() {
+            const totalSpan = document.getElementById('totalAccs');
+            const usedSpan = document.getElementById('usedAccs');
+            if (totalSpan) totalSpan.innerText = encryptedAccounts.length;
             let used = 0;
             const now = Date.now();
-            for (let i = 0; i < encryptedAccounts.length; i++) {
+            for (let i=0; i<encryptedAccounts.length; i++) {
                 const lock = localStorage.getItem(`lck_${i}`);
                 if (lock && now < parseInt(lock)) used++;
             }
-            const usedSpan = document.getElementById('usedAccs');
-            if(usedSpan) usedSpan.innerText = used;
-            const totalSpan = document.getElementById('totalAccs');
-            if(totalSpan) totalSpan.innerText = encryptedAccounts.length;
+            if (usedSpan) usedSpan.innerText = used;
         }
-        
-        // ---------- ОСНОВНАЯ ЛОГИКА ОЧЕРЕДИ ----------
-        let currentTimerInterval = null;
-        
+
+        let timerInterval = null;
+
         function renderNextAccount() {
-            if (currentTimerInterval) clearInterval(currentTimerInterval);
+            if (timerInterval) clearInterval(timerInterval);
             const container = document.getElementById('accountDisplay');
             if (!container) return;
 
             const now = Date.now();
-            let availableIndex = -1;
-            let earliestLockTime = Infinity;
+            let freeIdx = -1;
+            let soonestLock = Infinity;
 
-            // Ищем первый свободный аккаунт (без блокировки или срок истек)
             for (let i = 0; i < encryptedAccounts.length; i++) {
                 const lockVal = localStorage.getItem(`lck_${i}`);
-                if (!lockVal) {
-                    availableIndex = i;
-                    break;
-                }
-                const lockTime = parseInt(lockVal, 10);
-                if (now >= lockTime) {
-                    availableIndex = i;
-                    break;
-                }
-                if (lockTime < earliestLockTime) earliestLockTime = lockTime;
+                if (!lockVal) { freeIdx = i; break; }
+                const lockTime = parseInt(lockVal);
+                if (now >= lockTime) { freeIdx = i; break; }
+                if (lockTime < soonestLock) soonestLock = lockTime;
             }
 
-            // Если все заблокированы
-            if (availableIndex === -1) {
-                const resetTime = earliestLockTime;
+            if (freeIdx === -1) {
                 container.innerHTML = `
                     <div class="account-card">
-                        <span class="label">🔒 ОЧЕРЕДЬ ЗАБЛОКИРОВАНА</span>
-                        <span class="label">⏳ До разблокировки любого аккаунта:</span>
-                        <span id="finalTimer" class="timer-val">--:--:--</span>
-                        <p style="font-size:12px; color:#aaa;">Все аккаунты используются. Таймер обратного отсчета</p>
+                        <span class="label-micro">Очередь приостановлена</span>
+                        <span class="label-micro">до разблокировки</span>
+                        <div id="finalTimer" class="timer-large">--:--:--</div>
+                        <p style="font-size:12px; margin-top:12px;">все аккаунты используются</p>
                     </div>
                 `;
-                startFinalCountdown(resetTime);
+                startFinalCountdown(soonestLock);
                 return;
             }
 
-            // Рендерим доступный аккаунт
-            const nick = decode(encryptedAccounts[availableIndex][0]);
-            const pass = decode(encryptedAccounts[availableIndex][1]);
-            const accNumber = availableIndex + 1;
+            const nick = decode(encryptedAccounts[freeIdx][0]);
+            const pass = decode(encryptedAccounts[freeIdx][1]);
+            const accNumber = freeIdx + 1;
             
             container.innerHTML = `
                 <div class="account-card">
-                    <span class="label">🎮 АККАУНТ #${accNumber}</span>
-                    <div class="value" id="displayNick">${escapeHtml(nick)}</div>
-                    <button class="btn" id="copyNickBtn" data-idx="${availableIndex}" data-type="nick" data-value="${escapeAttr(nick)}">📋 Копировать ник</button>
-                    <div class="value" id="displayPass">••••••••</div>
-                    <button class="btn" id="copyPassBtn" data-idx="${availableIndex}" data-type="pass" data-value="${escapeAttr(pass)}">🔑 Копировать пароль</button>
-                    <small style="color:#7e8c9e;">✔ После копирования обоих полей аккаунт заблокируется на 24 часа</small>
+                    <span class="label-micro">аккаунт #${accNumber}</span>
+                    <div class="value-block">${escapeHtml(nick)}</div>
+                    <button class="btn btn-secondary" id="copyNickBtn" style="margin-bottom:8px;">копировать ник</button>
+                    <div class="value-block">••••••••</div>
+                    <button class="btn btn-secondary" id="copyPassBtn">копировать пароль</button>
+                    <div class="label-micro" style="margin-top:14px;">копирование обоих полей блокирует аккаунт на 24ч</div>
                 </div>
             `;
             
-            // Вешаем обработчики динамически
             const copyNick = document.getElementById('copyNickBtn');
             const copyPass = document.getElementById('copyPassBtn');
+            let nickOk = false, passOk = false;
+            const idx = freeIdx;
             
-            let nickCopied = false, passCopied = false;
-            const idx = availableIndex;
-            
-            const completeLock = () => {
-                if (nickCopied && passCopied) {
+            const tryLock = () => {
+                if (nickOk && passOk) {
                     localStorage.setItem(`lck_${idx}`, String(Date.now() + LOCK_TIME));
-                    // После блокировки перерисовываем очередь
                     renderNextAccount();
                 }
             };
             
-            copyNick.onclick = (e) => {
-                e.preventDefault();
-                const val = nick;
-                navigator.clipboard.writeText(val).then(() => {
-                    copyNick.innerText = "✅ Ник скопирован";
-                    copyNick.classList.add('success-bg');
-                    setTimeout(() => { if(copyNick) copyNick.innerText = "📋 Копировать ник"; copyNick.classList.remove('success-bg'); }, 1500);
-                    if (!nickCopied) {
-                        nickCopied = true;
-                        completeLock();
-                    }
-                }).catch(() => alert("Ошибка копирования"));
+            copyNick.onclick = () => {
+                navigator.clipboard.writeText(nick).then(() => {
+                    copyNick.innerText = "ник скопирован";
+                    copyNick.classList.add('btn-success');
+                    setTimeout(() => { if(copyNick) { copyNick.innerText = "копировать ник"; copyNick.classList.remove('btn-success'); } }, 1300);
+                    if (!nickOk) { nickOk = true; tryLock(); }
+                }).catch(() => alert("не удалось скопировать"));
             };
             
-            copyPass.onclick = (e) => {
-                e.preventDefault();
-                const val = pass;
-                navigator.clipboard.writeText(val).then(() => {
-                    copyPass.innerText = "✅ Пароль скопирован";
-                    copyPass.classList.add('success-bg');
-                    setTimeout(() => { if(copyPass) copyPass.innerText = "🔑 Копировать пароль"; copyPass.classList.remove('success-bg'); }, 1500);
-                    if (!passCopied) {
-                        passCopied = true;
-                        completeLock();
-                    }
-                }).catch(() => alert("Ошибка копирования"));
+            copyPass.onclick = () => {
+                navigator.clipboard.writeText(pass).then(() => {
+                    copyPass.innerText = "пароль скопирован";
+                    copyPass.classList.add('btn-success');
+                    setTimeout(() => { if(copyPass) { copyPass.innerText = "копировать пароль"; copyPass.classList.remove('btn-success'); } }, 1300);
+                    if (!passOk) { passOk = true; tryLock(); }
+                }).catch(() => alert("ошибка копирования"));
             };
         }
-        
-        // вспомогательные функции безопасности (XSS)
+
+        function startFinalCountdown(untilTime) {
+            if (timerInterval) clearInterval(timerInterval);
+            const update = () => {
+                const diff = untilTime - Date.now();
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    renderNextAccount();
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                const timerSpan = document.getElementById('finalTimer');
+                if (timerSpan) timerSpan.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            };
+            update();
+            timerInterval = setInterval(update, 980);
+        }
+
         function escapeHtml(str) {
             return str.replace(/[&<>]/g, function(m) {
                 if (m === '&') return '&amp;';
                 if (m === '<') return '&lt;';
                 if (m === '>') return '&gt;';
                 return m;
-            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-                return c;
             });
         }
-        function escapeAttr(str) {
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        // выход
+        function logout() {
+            if (timerInterval) clearInterval(timerInterval);
+            localStorage.removeItem('session');
+            location.reload();
         }
 
-        function startFinalCountdown(targetTimestamp) {
-            if (currentTimerInterval) clearInterval(currentTimerInterval);
-            const updateTimer = () => {
-                const now = Date.now();
-                const diff = targetTimestamp - now;
-                if (diff <= 0) {
-                    clearInterval(currentTimerInterval);
-                    renderNextAccount();
-                    return;
-                }
-                const hours = Math.floor(diff / 3600000);
-                const minutes = Math.floor((diff % 3600000) / 60000);
-                const seconds = Math.floor((diff % 60000) / 1000);
-                const timerSpan = document.getElementById('finalTimer');
-                if (timerSpan) timerSpan.innerText = `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
-            };
-            updateTimer();
-            currentTimerInterval = setInterval(updateTimer, 1000);
-        }
-
-        // Инициализация страницы
+        // инициализация
         function init() {
-            const sess = localStorage.getItem('session');
-            if (sess && Date.now() < parseInt(sess)) {
-                // сессия активна
-                activateBg();
+            const sessionTime = localStorage.getItem('session');
+            if (sessionTime && Date.now() < parseInt(sessionTime)) {
+                activateLiquid();
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
                 renderNextAccount();
             } else {
-                // Показываем логин
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('content').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'none';
                 localStorage.removeItem('session');
+                // легкая активация фона даже на логине
                 setTimeout(() => {
-                    if(!canvas) initCanvas();
-                    const bg = document.getElementById('bg-canvas');
-                    if(bg) bg.style.opacity = '0.5';
-                }, 0);
+                    if (!canvas) initLiquidBg();
+                    const canv = document.getElementById('liquid-canvas');
+                    if (canv) canv.style.opacity = '0.4';
+                }, 50);
             }
+            // обновляем статы, если админка вдруг осталась (не видна)
+            updateStats();
         }
-        
-        function logout() {
-            if (currentTimerInterval) clearInterval(currentTimerInterval);
-            localStorage.removeItem('session');
-            location.reload();
-        }
-        
-        // старт при загрузке
-        window.addEventListener('load', () => {
-            init();
-            // Экспорт необходимых глобальных функций
-            window.checkPass = checkPass;
-            window.sendAuthCodes = sendAuthCodes;
-            window.logout = logout;
-        });
+
+        window.addEventListener('load', init);
+        window.checkPass = checkPass;
+        window.sendAuthCodes = sendAuthCodes;
+        window.logout = logout;
     </script>
 </body>
 </html>
