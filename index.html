@@ -3,123 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private Queue System</title>
+    <title>Quantum Queue v6.0</title>
     <style>
         :root {
-            --bg: #0a0a0c;
-            --card-bg: #16161e;
-            --accent: linear-gradient(135deg, #00b4db, #0083b0);
-            --success: #10b981;
-            --danger: #f43f5e;
-            --text-p: #94a3b8;
-            --text-h: #f8fafc;
+            --bg: #050507;
+            --card-bg: rgba(20, 20, 25, 0.9);
+            --accent: linear-gradient(135deg, #00f2fe, #4facfe);
+            --success: #00e676;
+            --danger: #ff1744;
+            --text-p: #8899a6;
+            --text-h: #ffffff;
+            --border: rgba(255, 255, 255, 0.05);
         }
 
-        body {
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-h);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            background-color: var(--bg); color: var(--text-h);
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden;
         }
 
-        #loginOverlay {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0; transition: opacity 1s; }
 
+        .container { z-index: 10; width: 90%; max-width: 420px; transition: 0.5s ease; }
+
+        /* Логин и Админка */
         .box {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 28px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.05);
-            width: 90%;
-            max-width: 380px;
+            background: var(--card-bg); padding: 40px; border-radius: 28px; text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7); border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
         }
 
         input {
-            padding: 16px;
-            font-size: 18px;
-            border-radius: 14px;
-            border: 1px solid #2d2d39;
-            background: #0f0f13;
-            color: white;
-            margin-bottom: 20px;
-            width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-            outline: none;
+            padding: 16px; font-size: 18px; border-radius: 14px; border: 1px solid #2d2d39;
+            background: rgba(0,0,0,0.3); color: white; margin-bottom: 20px; width: 100%;
+            box-sizing: border-box; text-align: center; outline: none; transition: 0.3s;
         }
-
-        #content {
-            display: none;
-            width: 90%;
-            max-width: 450px;
-        }
-
-        .account-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 30px;
-            border: 1px solid rgba(255,255,255,0.03);
-            text-align: center;
-        }
-
-        .label { font-size: 11px; color: var(--text-p); text-transform: uppercase; font-weight: 800; margin-bottom: 10px; display: block; }
-        
-        .value { 
-            font-family: monospace; 
-            background: rgba(0,0,0,0.3); 
-            padding: 15px; 
-            border-radius: 12px; 
-            font-size: 18px; 
-            margin-bottom: 20px;
-            color: var(--text-h);
-        }
+        input:focus { border-color: #00f2fe; box-shadow: 0 0 10px rgba(0,242,254,0.2); }
 
         .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            background: var(--accent); color: white; border: none; border-radius: 14px;
+            padding: 16px; font-weight: 700; cursor: pointer; width: 100%;
+            text-transform: uppercase; margin-bottom: 10px; transition: 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,242,254,0.3); }
+        .btn.secondary { background: #1a1a22; color: #8899a6; border: 1px solid var(--border); }
+        .btn.danger { background: var(--danger); }
+        .btn.success { background: var(--success); }
+
+        /* Панель аккаунтов */
+        #content { display: none; }
+        .account-card {
+            background: var(--card-bg); border-radius: 24px; padding: 30px;
+            border: 1px solid var(--border); text-align: center; margin-bottom: 15px;
         }
 
-        .btn.secondary { background: #2d2d39; font-size: 12px; color: #94a3b8; }
-        .btn.success { background: var(--success); }
-        .timer-val { font-size: 32px; font-weight: 800; color: var(--danger); display: block; margin: 15px 0; font-family: monospace; }
+        .label { font-size: 11px; color: var(--text-p); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; display: block; }
+        .value { font-family: monospace; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; font-size: 16px; margin-bottom: 15px; border: 1px solid var(--border); }
+
+        /* Админ-панель */
+        #adminPanel { display: none; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px; color: var(--text-p); }
+        .stat-val { color: var(--text-h); font-weight: 700; }
+
+        .timer-val { font-size: 32px; font-weight: 800; color: var(--danger); display: block; margin: 15px 0; font-family: monospace; text-shadow: 0 0 10px rgba(255,23,68,0.5); }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-    <div id="loginOverlay">
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="loginOverlay" class="container">
         <div class="box">
-            <h2 style="margin-top:0">Авторизация</h2>
-            <input type="password" id="passInput" placeholder="Код или 1488">
+            <h2 style="margin-top:0; letter-spacing: -1px;">Авторизация</h2>
+            <input type="password" id="passInput" placeholder="Код или Пароль">
             <button class="btn" onclick="checkPass()">Войти</button>
-            <button class="btn secondary" id="requestBtn" onclick="sendAuthCodes()">Получить коды в Telegram</button>
+            <button class="btn secondary" id="requestBtn" onclick="sendAuthCodes()">Коды в Telegram</button>
         </div>
     </div>
 
-    <div id="content">
+    <div id="adminPanel" class="container">
+        <div class="box">
+            <h2 style="margin-top:0; color: #00f2fe;">Admin Console</h2>
+            <div class="stat-row"><span>Всего аккаунтов:</span><span class="stat-val" id="totalAccs">0</span></div>
+            <div class="stat-row"><span>Использовано сегодня:</span><span class="stat-val" id="usedAccs">0</span></div>
+            
+            <div class="stat-row"><span>Пинг до TG API:</span><span class="stat-val" id="pingVal">замер...</span></div>
+            
+            <div style="margin-top: 25px;">
+                <button class="btn secondary" onclick="testPing()">Тест Пинга</button>
+                <button class="btn danger" onclick="globalLogout()">Глобальный Выход</button>
+                <button class="btn" style="background: #2d2d39;" onclick="logout()">Закрыть панель</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="content" class="container">
         <div id="accountDisplay"></div>
         <div style="text-align: center; margin-top: 20px;">
-            <button class="btn" style="width:auto; background:#2d2d39; font-size:11px; padding: 8px 20px;" onclick="logout()">Выйти</button>
+            <button class="btn" style="width:auto; background:#2d2d39; font-size:11px; padding: 8px 20px;" onclick="logout()">Выйти из базы</button>
         </div>
     </div>
 
@@ -130,74 +113,134 @@
         const LOCK_TIME = 86400000;
 
         const encryptedAccounts = [
-            ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
-            ["U29rX1lhYklvY2huaXk=", "UjJ0WTd1QTFqVg=="],
-            ["TGVvbmVsX1BlcHNp", "Rjl3RTByVDV5QQ=="],
-            ["QWJzb2x1dGVfRm9yYmVz", "QTdrTTlwUjJ4Vg=="],
-            ["S2FydG9zaGthX0ZyZWU=", "RDNqSDdnSzFzVQ=="],
-            ["VmFJeWFfR3JhbmQ=", "UzZ2QjBuTTNrSg=="],
-            ["TWFobW9vZF9BcmJpcw==", "VjNjWDlmRDJzRw=="],
-            ["VHJpcHBpX1Ryb3BwaQ==", "VDV4UThlVzR6SA=="],
-            ["TWFobW9vZF9NYWhtb29kb3Y=", "SDh1SjNtUTdwVw=="],
-            ["TWloYWlsX0Fic29sdXRl", "V2ZZbUR0NFVJaQ=="],
-            ["TWFobW9vZF9TaG92ZWw=", "SzVvWTFlUjl0RA=="],
-            ["QW1ldGh5c3RfRGlhbW9uZA==", "WDJ6UjV0VzlxMw=="],
-            ["TWloYWlsX1BoaWxsaXBz", "QzJtRDh5SjNlUQ=="],
-            ["VHJhSWFsZWxvX1RyYWxhbGE=", "VzRuUjd0Wjl4Sw=="],
+            ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="], ["U29rX1lhYklvY2huaXk=", "UjJ0WTd1QTFqVg=="],
+            ["TGVvbmVsX1BlcHNp", "Rjl3RTByVDV5QQ=="], ["QWJzb2x1dGVfRm9yYmVz", "QTdrTTlwUjJ4Vg=="],
+            ["S2FydG9zaGthX0ZyZWU=", "RDNqSDdnSzFzVQ=="], ["VmFJeWFfR3JhbmQ=", "UzZ2QjBuTTNrSg=="],
+            ["TWFobW9vZF9BcmJpcw==", "VjNjWDlmRDJzRw=="], ["VHJpcHBpX1Ryb3BwaQ==", "VDV4UThlVzR6SA=="],
+            ["TWFobW9vZF_Mahmoodov", "SDh1SjNtUTdwVw=="], ["TWloYWlsX0Fic29sdXRl", "V2ZZbUR0NFVJaQ=="],
+            ["TWFobW9vZF_Shovel", "SzVvWTFlUjl0RA=="], ["QW1ldGh5c3RfRGlhbW9uZA==", "WDJ6UjV0VzlxMw=="],
+            ["TWloYWlsX1BoaWxsaXBz", "CzJtRDh5SjNlUQ=="], ["VHJhSWFsZWxvX1RyYWxhbGE=", "VzRuUjd0Wjl4Sw=="],
             ["TWljaGFpbF9QcmVzc3VyZQ==", "TTdhUDBzVTJjRg=="]
         ];
+
+        // --- 21. Анимированный фон (JS) ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for(let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 2
+                });
+            }
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(0, 242, 254, 0.3)';
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                p.x += p.vx; p.y += p.vy;
+                if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
+            });
+            requestAnimationFrame(drawCanvas);
+        }
+
+        function activateBg() {
+            document.getElementById('bg-canvas').style.opacity = '1';
+            initCanvas(); drawCanvas();
+            window.addEventListener('resize', initCanvas);
+        }
+
+        // --- Core Logic ---
+        function decode(str) { return decodeURIComponent(escape(atob(str))); }
 
         async function sendAuthCodes() {
             const btn = document.getElementById('requestBtn');
             const loginCode = Math.floor(1000 + Math.random() * 9000).toString();
             const resetCode = Math.floor(100000 + Math.random() * 899999).toString();
-            
             sessionStorage.setItem('temp_login_code', loginCode);
             sessionStorage.setItem('temp_reset_code', resetCode);
-            
             btn.innerText = "ОТПРАВЛЯЮ...";
             try {
-                // Код для входа
                 await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🔑 Код для входа: ${loginCode}` })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🔑 Вход: ${loginCode}\n🧨 Сброс: ${resetCode}` })
                 });
-                // Код для сброса
-                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🧨 Код для СБРОСА ТАЙМЕРОВ: ${resetCode}` })
-                });
-                btn.innerText = "КОДЫ ОТПРАВЛЕНЫ";
-            } catch (e) { btn.innerText = "ОШИБКА СЕТИ"; }
+                btn.innerText = "КОДЫ В ТГ";
+            } catch (e) { btn.innerText = "ОШИБКА"; }
         }
-
-        function decode(str) { return decodeURIComponent(escape(atob(str))); }
 
         function checkPass() {
             const input = document.getElementById('passInput').value;
             const tempLogin = sessionStorage.getItem('temp_login_code');
             const tempReset = sessionStorage.getItem('temp_reset_code');
 
-            // Проверка на сброс
             if (tempReset && input === tempReset) {
-                for (let key in localStorage) {
-                    if (key.startsWith('lck_')) localStorage.removeItem(key);
-                }
-                alert("Все таймеры успешно сброшены!");
-                location.reload();
-                return;
+                for (let key in localStorage) { if (key.startsWith('lck_')) localStorage.removeItem(key); }
+                alert("Таймеры сброшены!"); location.reload(); return;
             }
 
-            // Проверка на вход
-            if (input === MASTER_PASS || (tempLogin && input === tempLogin)) {
+            if (input === MASTER_PASS) {
+                activateBg(); showAdminPanel();
+            } else if (tempLogin && input === tempLogin) {
+                activateBg();
                 localStorage.setItem('session', Date.now() + 3600000);
+                localStorage.setItem('glo_log', 'in'); // Флаг глобального логина
                 init();
-            } else { alert('Неверный код'); }
+            } else { alert('Ошибка'); }
+        }
+
+        // --- 6. Удаленное завершение ---
+        function globalLogout() {
+            if(confirm("Принудительно разлогинить всех пользователей?")) {
+                localStorage.setItem('glo_log', 'out'); // Ставим флаг выхода
+                alert("Команда отправлена. Все сессии будут закрыты.");
+                logout();
+            }
+        }
+
+        // --- 26. Проверка пинга ---
+        async function testPing() {
+            const start = Date.now();
+            const pingDisplay = document.getElementById('pingVal');
+            pingDisplay.innerText = "замер...";
+            try {
+                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getMe`);
+                const end = Date.now();
+                pingDisplay.innerText = `${end - start} мс`;
+                pingDisplay.style.color = (end - start < 500) ? var(--success) : var(--danger);
+            } catch (e) { pingDisplay.innerText = "ошибка"; }
+        }
+
+        function showAdminPanel() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('totalAccs').innerText = encryptedAccounts.length;
+            
+            let usedCount = 0;
+            for (let i = 0; i < encryptedAccounts.length; i++) {
+                if (localStorage.getItem(`lck_${i}`)) usedCount++;
+            }
+            document.getElementById('usedAccs').innerText = usedCount;
+            testPing();
         }
 
         function init() {
+            // Чек глобального логаута
+            if(localStorage.getItem('glo_log') === 'out') { logout(); return; }
+
             const session = localStorage.getItem('session');
             if (session && Date.now() < parseInt(session)) {
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -222,8 +265,7 @@
 
             if (nextIndex === -1) {
                 container.innerHTML = `<div class="account-card"><span class="label">Очередь пуста</span><span id="finalTimer" class="timer-val">00:00:00</span></div>`;
-                startFinalCountdown(minLockTime);
-                return;
+                startFinalCountdown(minLockTime); return;
             }
 
             const nick = decode(encryptedAccounts[nextIndex][0]);
@@ -232,9 +274,9 @@
                 <div class="account-card">
                     <span class="label">Аккаунт #${nextIndex + 1}</span>
                     <div class="value">${nick}</div>
-                    <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Копировать ник</button>
+                    <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Ник</button>
                     <div class="value">••••••••</div>
-                    <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Копировать пароль</button>
+                    <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Пароль</button>
                 </div>
             `;
         }
@@ -248,25 +290,29 @@
                 const s = Math.floor((diff % 60000) / 1000);
                 document.getElementById('finalTimer').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
             };
-            update();
-            timerInterval = setInterval(update, 1000);
+            update(); timerInterval = setInterval(update, 1000);
         }
 
-        let state = [0, 0];
+        let copyState = [0, 0];
         function cp(type, idx, txt) {
             navigator.clipboard.writeText(txt);
             const btn = document.getElementById(type === 'n' ? 'btn_n' : 'btn_p');
-            btn.innerText = 'ГОТОВО';
-            btn.classList.add('success');
-            if (type === 'n') state[0] = 1; else state[1] = 1;
-            if (state[0] && state[1]) {
+            btn.innerText = 'OK'; btn.classList.add('success');
+            if (type === 'n') copyState[0] = 1; else copyState[1] = 1;
+            if (copyState[0] && copyState[1]) {
                 localStorage.setItem(`lck_${idx}`, Date.now() + LOCK_TIME);
-                state = [0, 0];
-                setTimeout(renderNext, 600);
+                copyState = [0, 0]; setTimeout(renderNext, 600);
             }
         }
 
-        function logout() { localStorage.removeItem('session'); location.reload(); }
+        function logout() {
+            localStorage.removeItem('session');
+            if(document.getElementById('adminPanel').style.display === 'block') {
+                 location.reload();
+            } else {
+                 location.reload();
+            }
+        }
         init();
     </script>
 </body>
