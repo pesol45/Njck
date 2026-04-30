@@ -3,9 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Liquid Queue | Fixed</title>
+    <title>Liquid Queue | Final Stable</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        /* БАЗОВЫЕ НАСТРОЙКИ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            /* УБИРАЕМ СИНЮЮ ОБВОДКУ НА МОБИЛЬНЫХ */
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
         :root {
             --bg-depth: #0a0a0c;
             --glass-base: rgba(22, 22, 28, 0.75);
@@ -14,37 +24,149 @@
             --text-secondary: #9aa7b5;
             --accent-soft: #5c6f87;
             --success-soft: #5f8a6f;
+            --danger-soft: #b45a6b;
         }
-        body, html { width: 100%; height: 100%; background: #050508; font-family: 'Inter', system-ui, sans-serif; display: flex; justify-content: center; align-items: center; overflow: hidden; color: var(--text-primary); }
-        #liquid-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.5; pointer-events: none; }
-        .container { z-index: 10; width: 92%; max-width: 440px; }
-        .glass-card { background: var(--glass-base); backdrop-filter: blur(20px); border-radius: 38px; border: 1px solid var(--glass-border); padding: 32px 28px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .input-field { width: 100%; padding: 16px; font-size: 17px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 44px; color: white; text-align: center; outline: none; margin-bottom: 20px; }
-        .btn { width: 100%; padding: 15px; border-radius: 44px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; margin-bottom: 12px; }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, #111118, #050508);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: var(--text-primary);
+        }
+
+        #liquid-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .container {
+            z-index: 10;
+            width: 92%;
+            max-width: 440px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* ЭФФЕКТ СТЕКЛА */
+        .glass-card {
+            background: var(--glass-base);
+            backdrop-filter: blur(20px) saturate(160%);
+            border-radius: 38px;
+            border: 1px solid var(--glass-border);
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 18px;
+            font-size: 17px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 44px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent-soft);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        /* КНОПКИ С ЭФФЕКТОМ НАЖАТИЯ */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 44px;
+            font-weight: 600;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+            filter: brightness(0.9);
+        }
+
         .btn-primary { background: var(--accent-soft); color: white; }
-        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid var(--glass-border); }
         .btn-success { background: var(--success-soft) !important; color: white; }
-        .account-card { background: rgba(0,0,0,0.2); border-radius: 30px; padding: 25px; border: 1px solid var(--glass-border); }
-        .label-micro { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; display: block; }
-        .value-block { font-family: monospace; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 15px; font-size: 15px; margin-bottom: 12px; border: 1px solid var(--glass-border); }
-        .timer-large { font-family: monospace; font-size: 32px; color: #b45a6b; margin: 10px 0; display: block; }
+
+        /* КАРТОЧКА АККАУНТА */
+        .account-card {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 32px;
+            padding: 28px 22px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 15px;
+        }
+
+        .label-micro {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .value-block {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 14px;
+            border-radius: 18px;
+            font-size: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            word-break: break-all;
+        }
+
+        .timer-large {
+            font-family: monospace;
+            font-size: 34px;
+            color: var(--danger-soft);
+            letter-spacing: 2px;
+            margin: 15px 0;
+            display: block;
+        }
     </style>
 </head>
 <body>
+
     <canvas id="liquid-canvas"></canvas>
 
     <div id="loginOverlay" class="container">
         <div class="glass-card">
-            <h2 style="margin-bottom: 20px;">Liquid Queue</h2>
-            <input type="password" id="passInput" class="input-field" placeholder="Код из Telegram">
-            <button class="btn btn-primary" onclick="checkPass()">Вход</button>
+            <h2 style="margin-bottom: 8px; font-weight: 500;">Liquid Queue</h2>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 25px;">введите код доступа</p>
+            <input type="password" id="passInput" class="input-field" placeholder="••••" autocomplete="off">
+            <button class="btn btn-primary" onclick="checkPass()">Войти</button>
             <button class="btn btn-secondary" id="requestBtn" onclick="sendAuthCodes()">Запросить коды</button>
         </div>
     </div>
 
     <div id="content" class="container" style="display: none;">
         <div id="accountDisplay"></div>
-        <button class="btn btn-secondary" style="width: auto; margin-top: 20px; padding: 10px 30px;" onclick="logout()">Выйти</button>
+        <div style="text-align: center;">
+            <button class="btn btn-secondary" style="width: auto; padding: 10px 35px; border-radius: 20px;" onclick="logout()">Выйти</button>
+        </div>
     </div>
 
     <script>
@@ -52,7 +174,7 @@
         const TG_CHAT_ID = "1209403544";
         const LOCK_TIME = 86400000;
 
-        // ИСПРАВЛЕННЫЙ МАССИВ (Все в Base64)
+        // ПРОВЕРЕННЫЕ АККАУНТЫ (БЕЗ ОШИБОК ДЕКОДА)
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
             ["U29rX1lhYklvY2huaXk=", "UjJ0WTd1QTFqVg=="],
@@ -62,9 +184,9 @@
             ["VmFJeWFfR3JhbmQ=", "UzZ2QjBuTTNrSg=="],
             ["TWFobW9vZF9BcmJpcw==", "VjNjWDlmRDJzRw=="],
             ["VHJpcHBpX1Ryb3BwaQ==", "VDV4UThlVzR6SA=="],
-            ["TWFobW9vZF9NYWhtb29kb3Y=", "SDh1SjNtUTdwVw=="], // Исправлено
+            ["TWFobW9vZF9NYWhtb29kb3Y=", "SDh1SjNtUTdwVw=="],
             ["TWloYWlsX0Fic29sdXRl", "V2ZZbUR0NFVJaQ=="],
-            ["TWFobW9vZF9TaG92ZWw=", "SzVvWTFlUjl0RA=="], // Исправлено
+            ["TWFobW9vZF9TaG92ZWw=", "SzVvWTFlUjl0RA=="],
             ["QW1ldGh5c3RfRGlhbW9uZA==", "WDJ6UjV0VzlxMw=="],
             ["TWloYWlsX1BoaWxsaXBz", "QzJtRDh5SjNlUQ=="],
             ["VHJhSWFsZWxvX1RyYWxhbGE=", "VzRuUjd0Wjl4Sw=="],
@@ -72,7 +194,7 @@
         ];
 
         function decode(str) {
-            try { return decodeURIComponent(escape(atob(str))); } catch(e) { return "Ошибка данных"; }
+            try { return decodeURIComponent(escape(atob(str))); } catch(e) { return "Ошибка!"; }
         }
 
         async function sendAuthCodes() {
@@ -80,26 +202,27 @@
             const lCode = Math.floor(1000 + Math.random() * 9000).toString();
             const rCode = Math.floor(100000 + Math.random() * 899999).toString();
             sessionStorage.setItem('l_c', lCode); sessionStorage.setItem('r_c', rCode);
-            btn.innerText = "Отправка...";
+            btn.innerText = "⏳ Отправка...";
             try {
                 await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🔹 Liquid\nВход: ${lCode}\nСброс: ${rCode}` })
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `💎 Liquid Queue\n🔑 Вход: ${lCode}\n🧨 Сброс: ${rCode}` })
                 });
-                btn.innerText = "Коды в TG";
-            } catch(e) { btn.innerText = "Ошибка"; }
+                btn.innerText = "✅ Проверьте Telegram";
+            } catch(e) { btn.innerText = "❌ Ошибка сети"; }
+            setTimeout(() => { btn.innerText = "Запросить коды"; }, 3000);
         }
 
         function checkPass() {
             const val = document.getElementById('passInput').value.trim();
             if (val === sessionStorage.getItem('r_c')) {
                 for (let i=0; i<encryptedAccounts.length; i++) localStorage.removeItem(`lck_${i}`);
-                alert("Таймеры сброшены"); location.reload(); return;
+                alert("Все блокировки сняты!"); location.reload(); return;
             }
             if (val === sessionStorage.getItem('l_c')) {
                 localStorage.setItem('session', Date.now() + 3600000);
                 initSession();
-            } else { alert("Неверный код"); }
+            } else { alert("Неверный код доступа"); }
         }
 
         function initSession() {
@@ -108,22 +231,27 @@
             render();
         }
 
-        let tInt = null;
+        let timerInt = null;
         function render() {
-            if (tInt) clearInterval(tInt);
+            if (timerInt) clearInterval(timerInt);
             const container = document.getElementById('accountDisplay');
             const now = Date.now();
             let free = -1, soon = Infinity;
 
             for (let i=0; i<encryptedAccounts.length; i++) {
-                const l = localStorage.getItem(`lck_${i}`);
-                if (!l || now >= parseInt(l)) { free = i; break; }
-                if (parseInt(l) < soon) soon = parseInt(l);
+                const lock = localStorage.getItem(`lck_${i}`);
+                if (!lock || now >= parseInt(lock)) { free = i; break; }
+                if (parseInt(lock) < soon) soon = parseInt(lock);
             }
 
             if (free === -1) {
-                container.innerHTML = `<div class="account-card"><span class="label-micro">Очередь занята</span><span id="timer" class="timer-large">--:--:--</span></div>`;
-                tInt = setInterval(() => {
+                container.innerHTML = `
+                    <div class="account-card">
+                        <span class="label-micro">очередь занята</span>
+                        <span id="timer" class="timer-large">--:--:--</span>
+                        <p style="font-size:11px; color:var(--text-secondary);">все аккаунты на КД</p>
+                    </div>`;
+                timerInt = setInterval(() => {
                     const d = soon - Date.now();
                     if (d <= 0) render();
                     const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
@@ -135,53 +263,56 @@
             const n = decode(encryptedAccounts[free][0]), p = decode(encryptedAccounts[free][1]);
             container.innerHTML = `
                 <div class="account-card">
-                    <span class="label-micro">Аккаунт #${free+1}</span>
-                    <div class="value-block">${n}</div>
+                    <span class="label-micro">доступен аккаунт #${free+1}</span>
+                    <div class="value-block" id="vN">${n}</div>
                     <button class="btn btn-secondary" id="cN">Копировать ник</button>
                     <div class="value-block">••••••••</div>
                     <button class="btn btn-secondary" id="cP">Копировать пароль</button>
-                </div>
-            `;
+                </div>`;
 
             let nO = false, pO = false;
+            const checkFull = () => { if(nO && pO) { localStorage.setItem(`lck_${free}`, Date.now()+LOCK_TIME); setTimeout(render, 800); } };
+
             document.getElementById('cN').onclick = () => {
                 navigator.clipboard.writeText(n);
-                document.getElementById('cN').innerText = "Готово";
+                document.getElementById('cN').innerText = "✅ Скопировано";
                 document.getElementById('cN').classList.add('btn-success');
-                nO = true; if(nO && pO) { localStorage.setItem(`lck_${free}`, Date.now()+LOCK_TIME); setTimeout(render, 800); }
+                nO = true; checkFull();
             };
             document.getElementById('cP').onclick = () => {
                 navigator.clipboard.writeText(p);
-                document.getElementById('cP').innerText = "Готово";
+                document.getElementById('cP').innerText = "✅ Скопировано";
                 document.getElementById('cP').classList.add('btn-success');
-                pO = true; if(nO && pO) { localStorage.setItem(`lck_${free}`, Date.now()+LOCK_TIME); setTimeout(render, 800); }
+                pO = true; checkFull();
             };
         }
 
         function logout() { localStorage.removeItem('session'); location.reload(); }
 
-        // Фоновая анимация
+        // BACKGROUND ANIMATION
         const cvs = document.getElementById('liquid-canvas');
         const ctx = cvs.getContext('2d');
         let pts = [];
         function resize() {
             cvs.width = window.innerWidth; cvs.height = window.innerHeight;
             pts = [];
-            for(let i=0; i<50; i++) pts.push({x: Math.random()*cvs.width, y: Math.random()*cvs.height, vx: Math.random()-0.5, vy: Math.random()-0.5});
+            for(let i=0; i<60; i++) pts.push({x: Math.random()*cvs.width, y: Math.random()*cvs.height, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4});
         }
         function draw() {
             ctx.clearRect(0,0,cvs.width,cvs.height);
-            ctx.fillStyle = "rgba(100, 150, 255, 0.1)";
+            ctx.fillStyle = "rgba(130, 160, 255, 0.15)";
             pts.forEach(p => {
-                ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
                 p.x += p.vx; p.y += p.vy;
                 if(p.x<0 || p.x>cvs.width) p.vx*=-1; if(p.y<0 || p.y>cvs.height) p.vy*=-1;
             });
             requestAnimationFrame(draw);
         }
+
         window.onload = () => {
             resize(); draw();
-            if (localStorage.getItem('session') > Date.now()) initSession();
+            window.addEventListener('resize', resize);
+            if (parseInt(localStorage.getItem('session')) > Date.now()) initSession();
         };
     </script>
 </body>
