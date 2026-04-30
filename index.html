@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Quantum Queue v7.0 — Исправлено</title>
+    <title>Quantum Queue v7.0 — Light</title>
     <style>
         * {
             box-sizing: border-box;
@@ -72,8 +72,8 @@
         .label { font-size: 11px; color: var(--text-p); text-transform: uppercase; font-weight: 800; margin-bottom: 8px; display: block; letter-spacing: 1px; }
         .value { font-family: 'Fira Mono', monospace; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 20px; font-size: 16px; margin-bottom: 15px; border: 1px solid var(--border); word-break: break-all; }
 
-        /* Админка */
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 14px; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 24px; }
+        /* Админка (упрощена) */
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 24px; }
         .stat-val { color: var(--text-h); font-weight: 700; }
 
         .timer-val { font-size: 34px; font-weight: 800; color: var(--danger); display: block; margin: 15px 0; font-family: monospace; text-shadow: 0 0 8px rgba(255,23,68,0.5); letter-spacing: 2px; }
@@ -93,26 +93,19 @@
         <div class="box">
             <h2 style="margin-top:0; letter-spacing: -0.5px;">⚡ Quantum Queue</h2>
             <p style="color: #9aaebf; font-size: 13px; margin-bottom: 24px;">Введите код доступа</p>
-            <input type="password" id="passInput" placeholder="Код доступа / пароль" autocomplete="off">
+            <input type="password" id="passInput" placeholder="Код доступа" autocomplete="off">
             <button class="btn" id="loginBtn" onclick="checkPass()">Войти</button>
             <button class="btn secondary" id="requestBtn" onclick="sendAuthCodes()">📲 Запросить коды в Telegram</button>
         </div>
     </div>
 
-    <!-- АДМИН ПАНЕЛЬ -->
+    <!-- УПРОЩЕННАЯ АДМИН ПАНЕЛЬ (без пинга, глобалки и кнопки закрыть) -->
     <div id="adminPanel" class="container" style="display: none;">
         <div class="box">
             <h2 style="margin-top:0; color: #00f2fe;">🛡️ Admin Panel</h2>
             <div class="stat-row"><span>📦 Всего аккаунтов:</span><span class="stat-val" id="totalAccs">0</span></div>
             <div class="stat-row"><span>⏳ Заблокировано сегодня:</span><span class="stat-val" id="usedAccs">0</span></div>
-            <div class="stat-row"><span>📡 Пинг до Telegram:</span><span class="stat-val" id="pingVal">— мс</span></div>
-            
-            <div class="flex-buttons">
-                <button class="btn secondary" onclick="testPing()">Пинг</button>
-                <button class="btn danger" onclick="globalLogout()">🚪 Глобальный выход</button>
-                <button class="btn secondary" onclick="logout()">Закрыть</button>
-            </div>
-            <p style="font-size: 11px; color: #5f6c7a; margin-top: 20px;">master‑пароль: 1488 | сброс локов по коду</p>
+            <p style="font-size: 11px; color: #5f6c7a; margin-top: 20px;">сброс локов по спец-коду (6 цифр)</p>
         </div>
     </div>
 
@@ -128,7 +121,6 @@
         // ------------------- КОНФИГУРАЦИЯ -------------------
         const TG_TOKEN = "8417193861:AAGCpd-AFl7HW2_tNbzlVvXA7kxEz1NyESc";
         const TG_CHAT_ID = "1209403544";
-        const MASTER_PASS = "1488";
         const LOCK_TIME = 86400000; // 24 часа в мс
 
         // Зашифрованные аккаунты (base64)
@@ -186,7 +178,6 @@
                     p.y += p.vy;
                     if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
                     if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
-                    // небольшая мягкая граница
                     p.x = Math.min(Math.max(p.x, 0), canvas.width);
                     p.y = Math.min(Math.max(p.y, 0), canvas.height);
                 }
@@ -230,16 +221,14 @@
             setTimeout(() => { if(btn) { btn.innerText = "📲 Коды в Telegram"; btn.disabled = false; } }, 2500);
         }
 
-        // ---------- ПРОВЕРКА ВХОДА ----------
-        let globalTimerInterval = null;
-
+        // ---------- ПРОВЕРКА ВХОДА (УДАЛЕН МАСТЕР-ПАРОЛЬ 1.1) ----------
         function checkPass() {
             const inputField = document.getElementById('passInput');
             const input = inputField.value.trim();
             const tempLogin = sessionStorage.getItem('temp_login_code');
             const tempReset = sessionStorage.getItem('temp_reset_code');
 
-            // 1. СБРОС ЛОКОВ (код сброса)
+            // 1. СБРОС ЛОКОВ (код сброса) — оставляем
             if (tempReset && input === tempReset) {
                 let removed = 0;
                 for (let i = 0; i < encryptedAccounts.length; i++) {
@@ -253,19 +242,11 @@
                 location.reload();
                 return;
             }
-
-            // 2. Мастер-пароль → админка
-            if (input === MASTER_PASS) {
-                activateBg();
-                showAdminPanel();
-                return;
-            }
             
-            // 3. Обычный временный код входа
+            // 2. Обычный временный код входа (единственный способ)
             if (tempLogin && input === tempLogin) {
                 activateBg();
                 localStorage.setItem('session', Date.now() + 3600000); // 1 час сессия
-                localStorage.setItem('glo_log', 'active');
                 sessionStorage.removeItem('temp_login_code');
                 initUserSession();
             } else {
@@ -276,54 +257,18 @@
 
         // Инициализация пользовательской очереди
         function initUserSession() {
-            if(localStorage.getItem('glo_log') === 'force_logout') {
-                alert("Сессия была завершена администратором.");
-                logout();
-                return;
-            }
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             renderNextAccount();
         }
 
-        // Глобальный выход (админ)
-        function globalLogout() {
-            if(!confirm("⚠️ Принудительно завершить ВСЕ активные сессии пользователей? После этого каждый перезагрузит страницу.")) return;
-            localStorage.setItem('glo_log', 'force_logout');
-            // также чистим все сессии из localStorage (локальные сессии)
-            for(let key in localStorage) {
-                if(key === 'session') localStorage.removeItem(key);
-                if(key.startsWith('lck_')) continue; // блокировки не трогаем
-            }
-            alert("🌐 Глобальный выход активирован. Все пользователи будут вынуждены перелогиниться.");
-            logout();
-        }
-
-        // Проверка пинга до телеграма
-        async function testPing() {
-            const pingSpan = document.getElementById('pingVal');
-            if(!pingSpan) return;
-            pingSpan.innerText = "⏳ ...";
-            const start = Date.now();
-            try {
-                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getMe`, { signal: AbortSignal.timeout(5000) });
-                const ms = Date.now() - start;
-                pingSpan.innerText = `${ms} мс`;
-                pingSpan.style.color = ms < 600 ? "#9bff9e" : "#ffaa66";
-            } catch(e) {
-                pingSpan.innerText = "❌ таймаут";
-                pingSpan.style.color = "#ff7777";
-            }
-        }
-
-        function showAdminPanel() {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('totalAccs').innerText = encryptedAccounts.length;
-            updateUsedStats();
-            testPing();
-        }
-
+        // Упрощенная админ-панель (открывается только через код сброса? нет, теперь мастер-пароль удален)
+        // Для доступа к админке нужно использовать специальный код: 1488 больше НЕ РАБОТАЕТ.
+        // Но если нужно показать админку — сейчас она не открывается без мастер-пароля, это ок.
+        // Удаляем функционал полностью: showAdminPanel не вызывается нигде.
+        
+        // Обновление статистики используется только внутри админ-панели, но админ-панель недоступна.
+        // Оставим функцию updateUsedStats для возможного расширения. Она нигде не вызывается.
         function updateUsedStats() {
             let used = 0;
             const now = Date.now();
@@ -331,14 +276,17 @@
                 const lock = localStorage.getItem(`lck_${i}`);
                 if (lock && now < parseInt(lock)) used++;
             }
-            document.getElementById('usedAccs').innerText = used;
+            const usedSpan = document.getElementById('usedAccs');
+            if(usedSpan) usedSpan.innerText = used;
+            const totalSpan = document.getElementById('totalAccs');
+            if(totalSpan) totalSpan.innerText = encryptedAccounts.length;
         }
-
-        // ---------- ОСНОВНАЯ ЛОГИКА ОЧЕРЕДИ (С ИСПРАВЛЕНИЕМ БАГОВ) ----------
+        
+        // ---------- ОСНОВНАЯ ЛОГИКА ОЧЕРЕДИ ----------
         let currentTimerInterval = null;
         
         function renderNextAccount() {
-            if (globalTimerInterval) clearInterval(globalTimerInterval);
+            if (currentTimerInterval) clearInterval(currentTimerInterval);
             const container = document.getElementById('accountDisplay');
             if (!container) return;
 
@@ -392,7 +340,7 @@
                 </div>
             `;
             
-            // Вешаем обработчики динамически, убирая костыль с глобальным cp
+            // Вешаем обработчики динамически
             const copyNick = document.getElementById('copyNickBtn');
             const copyPass = document.getElementById('copyPassBtn');
             
@@ -402,7 +350,6 @@
             const completeLock = () => {
                 if (nickCopied && passCopied) {
                     localStorage.setItem(`lck_${idx}`, String(Date.now() + LOCK_TIME));
-                    updateUsedStats();
                     // После блокировки перерисовываем очередь
                     renderNextAccount();
                 }
@@ -472,16 +419,8 @@
             currentTimerInterval = setInterval(updateTimer, 1000);
         }
 
-        // Инициализация страницы с проверкой глобального логаута
+        // Инициализация страницы
         function init() {
-            // Проверка, выгнал ли админ
-            if (localStorage.getItem('glo_log') === 'force_logout') {
-                localStorage.removeItem('session');
-                localStorage.removeItem('glo_log');
-                logout(false);
-                return;
-            }
-            
             const sess = localStorage.getItem('session');
             if (sess && Date.now() < parseInt(sess)) {
                 // сессия активна
@@ -489,17 +428,12 @@
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
                 renderNextAccount();
-                // Периодически обновляем статистику админки если она открыта? В админке вызовется при открытии.
-                if(document.getElementById('adminPanel').style.display === 'block') updateUsedStats();
             } else {
                 // Показываем логин
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('content').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'none';
-                // чистим возможную сессию
                 localStorage.removeItem('session');
-                // активируем фон только после логина, но фон лучше активировать чтоб не пустой экран
-                // но показываем легкий статичный канвас с низкой непрозрачностью
                 setTimeout(() => {
                     if(!canvas) initCanvas();
                     const bg = document.getElementById('bg-canvas');
@@ -508,22 +442,18 @@
             }
         }
         
-        function logout(showReload = true) {
-            if (globalTimerInterval) clearInterval(globalTimerInterval);
+        function logout() {
             if (currentTimerInterval) clearInterval(currentTimerInterval);
             localStorage.removeItem('session');
-            // но не удаляем глобальный флаг принудительно, чтобы при перезагрузке отработал logout выше
             location.reload();
         }
         
         // старт при загрузке
         window.addEventListener('load', () => {
             init();
-            // Добавляем обработчики в глобальный скоуп для админских кнопок
+            // Экспорт необходимых глобальных функций
             window.checkPass = checkPass;
             window.sendAuthCodes = sendAuthCodes;
-            window.globalLogout = globalLogout;
-            window.testPing = testPing;
             window.logout = logout;
         });
     </script>
