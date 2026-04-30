@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Liquid Queue | Final Stable</title>
+    <title>Liquid Queue | Private</title>
     <style>
-        /* БАЗОВЫЕ НАСТРОЙКИ */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             user-select: none;
-            /* УБИРАЕМ СИНЮЮ ОБВОДКУ НА МОБИЛЬНЫХ */
             -webkit-tap-highlight-color: transparent;
             outline: none;
         }
@@ -28,36 +26,20 @@
         }
 
         body, html {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background: radial-gradient(circle at 20% 30%, #111118, #050508);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            color: var(--text-primary);
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: var(--text-primary);
         }
 
         #liquid-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            opacity: 0.5;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.5; pointer-events: none;
         }
 
-        .container {
-            z-index: 10;
-            width: 92%;
-            max-width: 440px;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .container { z-index: 10; width: 92%; max-width: 440px; }
 
-        /* ЭФФЕКТ СТЕКЛА */
         .glass-card {
             background: var(--glass-base);
             backdrop-filter: blur(20px) saturate(160%);
@@ -69,83 +51,32 @@
         }
 
         .input-field {
-            width: 100%;
-            padding: 18px;
-            font-size: 17px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            border-radius: 44px;
-            color: white;
-            text-align: center;
-            margin-bottom: 20px;
-            transition: 0.3s;
+            width: 100%; padding: 18px; font-size: 17px;
+            background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border);
+            border-radius: 44px; color: white; text-align: center;
+            margin-bottom: 20px; transition: 0.3s;
         }
 
-        .input-field:focus {
-            border-color: var(--accent-soft);
-            background: rgba(0, 0, 0, 0.6);
-        }
-
-        /* КНОПКИ С ЭФФЕКТОМ НАЖАТИЯ */
         .btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 44px;
-            font-weight: 600;
-            font-size: 15px;
-            border: none;
-            cursor: pointer;
-            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 12px;
-            letter-spacing: 0.3px;
+            width: 100%; padding: 16px; border-radius: 44px;
+            font-weight: 600; font-size: 15px; border: none;
+            cursor: pointer; transition: 0.2s; margin-bottom: 12px;
         }
 
-        .btn:active {
-            transform: scale(0.96);
-            filter: brightness(0.9);
-        }
+        .btn:active { transform: scale(0.96); filter: brightness(0.9); }
 
         .btn-primary { background: var(--accent-soft); color: white; }
         .btn-secondary { background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid var(--glass-border); }
         .btn-success { background: var(--success-soft) !important; color: white; }
 
-        /* КАРТОЧКА АККАУНТА */
         .account-card {
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 32px;
-            padding: 28px 22px;
-            border: 1px solid var(--glass-border);
-            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.25); border-radius: 32px;
+            padding: 28px 22px; border: 1px solid var(--glass-border); margin-bottom: 15px;
         }
 
-        .label-micro {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--text-secondary);
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .value-block {
-            font-family: 'Fira Code', monospace;
-            background: rgba(0, 0, 0, 0.35);
-            padding: 14px;
-            border-radius: 18px;
-            font-size: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            word-break: break-all;
-        }
-
-        .timer-large {
-            font-family: monospace;
-            font-size: 34px;
-            color: var(--danger-soft);
-            letter-spacing: 2px;
-            margin: 15px 0;
-            display: block;
-        }
+        .label-micro { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-secondary); margin-bottom: 10px; display: block; }
+        .value-block { font-family: monospace; background: rgba(0, 0, 0, 0.35); padding: 14px; border-radius: 18px; font-size: 15px; margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.03); word-break: break-all; }
+        .timer-large { font-family: monospace; font-size: 34px; color: var(--danger-soft); margin: 15px 0; display: block; }
     </style>
 </head>
 <body>
@@ -155,7 +86,7 @@
     <div id="loginOverlay" class="container">
         <div class="glass-card">
             <h2 style="margin-bottom: 8px; font-weight: 500;">Liquid Queue</h2>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 25px;">введите код доступа</p>
+            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 25px;">введите код или запросите в TG</p>
             <input type="password" id="passInput" class="input-field" placeholder="••••" autocomplete="off">
             <button class="btn btn-primary" onclick="checkPass()">Войти</button>
             <button class="btn btn-secondary" id="requestBtn" onclick="sendAuthCodes()">Запросить коды</button>
@@ -165,7 +96,7 @@
     <div id="content" class="container" style="display: none;">
         <div id="accountDisplay"></div>
         <div style="text-align: center;">
-            <button class="btn btn-secondary" style="width: auto; padding: 10px 35px; border-radius: 20px;" onclick="logout()">Выйти</button>
+            <button class="btn btn-secondary" style="width: auto; padding: 10px 35px;" onclick="logout()">Выйти</button>
         </div>
     </div>
 
@@ -173,8 +104,10 @@
         const TG_TOKEN = "8417193861:AAGCpd-AFl7HW2_tNbzlVvXA7kxEz1NyESc";
         const TG_CHAT_ID = "1209403544";
         const LOCK_TIME = 86400000;
+        
+        let secretCounter = 0;
+        const SECRET_PASS = "0000";
 
-        // ПРОВЕРЕННЫЕ АККАУНТЫ (БЕЗ ОШИБОК ДЕКОДА)
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
             ["U29rX1lhYklvY2huaXk=", "UjJ0WTd1QTFqVg=="],
@@ -193,9 +126,7 @@
             ["TWljaGFpbF9QcmVzc3VyZQ==", "TTdhUDBzVTJjRg=="]
         ];
 
-        function decode(str) {
-            try { return decodeURIComponent(escape(atob(str))); } catch(e) { return "Ошибка!"; }
-        }
+        function decode(str) { try { return decodeURIComponent(escape(atob(str))); } catch(e) { return "Ошибка!"; } }
 
         async function sendAuthCodes() {
             const btn = document.getElementById('requestBtn');
@@ -206,23 +137,38 @@
             try {
                 await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `💎 Liquid Queue\n🔑 Вход: ${lCode}\n🧨 Сброс: ${rCode}` })
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `💎 Liquid\n🔑 Вход: ${lCode}\n🧨 Сброс: ${rCode}` })
                 });
-                btn.innerText = "✅ Проверьте Telegram";
-            } catch(e) { btn.innerText = "❌ Ошибка сети"; }
+                btn.innerText = "✅ Отправлено";
+            } catch(e) { btn.innerText = "❌ Ошибка"; }
             setTimeout(() => { btn.innerText = "Запросить коды"; }, 3000);
         }
 
         function checkPass() {
             const val = document.getElementById('passInput').value.trim();
+            
+            // Логика пасхалки
+            if (val === "") {
+                secretCounter++;
+                if (secretCounter === 5) {
+                    const pass = prompt("Введите секретный код:");
+                    if (pass === SECRET_PASS) {
+                        localStorage.setItem('session', Date.now() + 3600000);
+                        initSession();
+                    }
+                    secretCounter = 0;
+                    return;
+                }
+            } else { secretCounter = 0; }
+
             if (val === sessionStorage.getItem('r_c')) {
                 for (let i=0; i<encryptedAccounts.length; i++) localStorage.removeItem(`lck_${i}`);
-                alert("Все блокировки сняты!"); location.reload(); return;
+                alert("Сброшено!"); location.reload(); return;
             }
             if (val === sessionStorage.getItem('l_c')) {
                 localStorage.setItem('session', Date.now() + 3600000);
                 initSession();
-            } else { alert("Неверный код доступа"); }
+            } else if (val !== "") { alert("Неверный код"); }
         }
 
         function initSession() {
@@ -245,12 +191,7 @@
             }
 
             if (free === -1) {
-                container.innerHTML = `
-                    <div class="account-card">
-                        <span class="label-micro">очередь занята</span>
-                        <span id="timer" class="timer-large">--:--:--</span>
-                        <p style="font-size:11px; color:var(--text-secondary);">все аккаунты на КД</p>
-                    </div>`;
+                container.innerHTML = `<div class="account-card"><span class="label-micro">занято</span><span id="timer" class="timer-large">--:--:--</span></div>`;
                 timerInt = setInterval(() => {
                     const d = soon - Date.now();
                     if (d <= 0) render();
@@ -263,44 +204,30 @@
             const n = decode(encryptedAccounts[free][0]), p = decode(encryptedAccounts[free][1]);
             container.innerHTML = `
                 <div class="account-card">
-                    <span class="label-micro">доступен аккаунт #${free+1}</span>
-                    <div class="value-block" id="vN">${n}</div>
-                    <button class="btn btn-secondary" id="cN">Копировать ник</button>
+                    <span class="label-micro">аккаунт #${free+1}</span>
+                    <div class="value-block">${n}</div>
+                    <button class="btn btn-secondary" id="cN">Ник</button>
                     <div class="value-block">••••••••</div>
-                    <button class="btn btn-secondary" id="cP">Копировать пароль</button>
+                    <button class="btn btn-secondary" id="cP">Пароль</button>
                 </div>`;
 
             let nO = false, pO = false;
-            const checkFull = () => { if(nO && pO) { localStorage.setItem(`lck_${free}`, Date.now()+LOCK_TIME); setTimeout(render, 800); } };
-
-            document.getElementById('cN').onclick = () => {
-                navigator.clipboard.writeText(n);
-                document.getElementById('cN').innerText = "✅ Скопировано";
-                document.getElementById('cN').classList.add('btn-success');
-                nO = true; checkFull();
-            };
-            document.getElementById('cP').onclick = () => {
-                navigator.clipboard.writeText(p);
-                document.getElementById('cP').innerText = "✅ Скопировано";
-                document.getElementById('cP').classList.add('btn-success');
-                pO = true; checkFull();
-            };
+            const lockIt = () => { if(nO && pO) { localStorage.setItem(`lck_${free}`, Date.now()+LOCK_TIME); setTimeout(render, 800); } };
+            document.getElementById('cN').onclick = () => { navigator.clipboard.writeText(n); document.getElementById('cN').innerText = "✅"; document.getElementById('cN').classList.add('btn-success'); nO = true; lockIt(); };
+            document.getElementById('cP').onclick = () => { navigator.clipboard.writeText(p); document.getElementById('cP').innerText = "✅"; document.getElementById('cP').classList.add('btn-success'); pO = true; lockIt(); };
         }
 
         function logout() { localStorage.removeItem('session'); location.reload(); }
 
-        // BACKGROUND ANIMATION
         const cvs = document.getElementById('liquid-canvas');
         const ctx = cvs.getContext('2d');
         let pts = [];
         function resize() {
             cvs.width = window.innerWidth; cvs.height = window.innerHeight;
-            pts = [];
-            for(let i=0; i<60; i++) pts.push({x: Math.random()*cvs.width, y: Math.random()*cvs.height, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4});
+            pts = []; for(let i=0; i<50; i++) pts.push({x: Math.random()*cvs.width, y: Math.random()*cvs.height, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4});
         }
         function draw() {
-            ctx.clearRect(0,0,cvs.width,cvs.height);
-            ctx.fillStyle = "rgba(130, 160, 255, 0.15)";
+            ctx.clearRect(0,0,cvs.width,cvs.height); ctx.fillStyle = "rgba(130, 160, 255, 0.1)";
             pts.forEach(p => {
                 ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
                 p.x += p.vx; p.y += p.vy;
@@ -308,12 +235,7 @@
             });
             requestAnimationFrame(draw);
         }
-
-        window.onload = () => {
-            resize(); draw();
-            window.addEventListener('resize', resize);
-            if (parseInt(localStorage.getItem('session')) > Date.now()) initSession();
-        };
+        window.onload = () => { resize(); draw(); window.addEventListener('resize', resize); if (parseInt(localStorage.getItem('session')) > Date.now()) initSession(); };
     </script>
 </body>
 </html>
