@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Queue System v5.1</title>
+    <title>Private Queue System</title>
     <style>
         :root {
             --bg: #0a0a0c;
@@ -109,11 +109,10 @@
 
     <div id="loginOverlay">
         <div class="box">
-            <h2 style="margin-top:0">Вход</h2>
+            <h2 style="margin-top:0">Авторизация</h2>
             <input type="password" id="passInput" placeholder="Код или 1488">
             <button class="btn" onclick="checkPass()">Войти</button>
-            <button class="btn secondary" id="requestBtn" onclick="sendAuthCode()">Код в Telegram</button>
-            <p style="font-size: 10px; color: #444; margin-top: 15px; cursor: pointer;" onclick="forceReset()">СБРОСИТЬ ВСЕ ТАЙМЕРЫ</p>
+            <button class="btn secondary" id="requestBtn" onclick="sendAuthCodes()">Получить коды в Telegram</button>
         </div>
     </div>
 
@@ -129,8 +128,6 @@
         const TG_CHAT_ID = "1209403544";
         const MASTER_PASS = "1488";
         const LOCK_TIME = 86400000;
-        // Этот ключ заставит браузер забыть старые блокировки при обновлении на эту версию
-        const DB_VERSION = "final_v6"; 
 
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
@@ -150,55 +147,57 @@
             ["TWljaGFpbF9QcmVzc3VyZQ==", "TTdhUDBzVTJjRg=="]
         ];
 
-        function forceReset() {
-            if(confirm("Очистить все таймеры и начать очередь сначала?")) {
-                for (let key in localStorage) {
-                    if (key.startsWith('lck_') || key.startsWith('db_ver')) localStorage.removeItem(key);
-                }
-                alert("Таймеры сброшены. Теперь вводи пароль.");
-                location.reload();
-            }
-        }
-
-        // Проверка версии базы данных
-        function checkDbVersion() {
-            if (localStorage.getItem('db_ver') !== DB_VERSION) {
-                for (let key in localStorage) {
-                    if (key.startsWith('lck_')) localStorage.removeItem(key);
-                }
-                localStorage.setItem('db_ver', DB_VERSION);
-                console.log("Database reset to " + DB_VERSION);
-            }
-        }
-
-        async function sendAuthCode() {
+        async function sendAuthCodes() {
             const btn = document.getElementById('requestBtn');
-            const code = Math.floor(1000 + Math.random() * 9000).toString();
-            sessionStorage.setItem('temp_auth_code', code);
+            const loginCode = Math.floor(1000 + Math.random() * 9000).toString();
+            const resetCode = Math.floor(100000 + Math.random() * 899999).toString();
+            
+            sessionStorage.setItem('temp_login_code', loginCode);
+            sessionStorage.setItem('temp_reset_code', resetCode);
+            
             btn.innerText = "ОТПРАВЛЯЮ...";
             try {
+                // Код для входа
                 await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🔑 Твой код: ${code}` })
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🔑 Код для входа: ${loginCode}` })
                 });
-                btn.innerText = "КОД В ТЕЛЕГРАМЕ";
-            } catch (e) { btn.innerText = "ОШИБКА"; }
+                // Код для сброса
+                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🧨 Код для СБРОСА ТАЙМЕРОВ: ${resetCode}` })
+                });
+                btn.innerText = "КОДЫ ОТПРАВЛЕНЫ";
+            } catch (e) { btn.innerText = "ОШИБКА СЕТИ"; }
         }
 
         function decode(str) { return decodeURIComponent(escape(atob(str))); }
 
         function checkPass() {
             const input = document.getElementById('passInput').value;
-            const tempCode = sessionStorage.getItem('temp_auth_code');
-            if (input === MASTER_PASS || (tempCode && input === tempCode)) {
+            const tempLogin = sessionStorage.getItem('temp_login_code');
+            const tempReset = sessionStorage.getItem('temp_reset_code');
+
+            // Проверка на сброс
+            if (tempReset && input === tempReset) {
+                for (let key in localStorage) {
+                    if (key.startsWith('lck_')) localStorage.removeItem(key);
+                }
+                alert("Все таймеры успешно сброшены!");
+                location.reload();
+                return;
+            }
+
+            // Проверка на вход
+            if (input === MASTER_PASS || (tempLogin && input === tempLogin)) {
                 localStorage.setItem('session', Date.now() + 3600000);
                 init();
-            } else { alert('Ошибка'); }
+            } else { alert('Неверный код'); }
         }
 
         function init() {
-            checkDbVersion();
             const session = localStorage.getItem('session');
             if (session && Date.now() < parseInt(session)) {
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -233,9 +232,9 @@
                 <div class="account-card">
                     <span class="label">Аккаунт #${nextIndex + 1}</span>
                     <div class="value">${nick}</div>
-                    <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Ник</button>
+                    <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Копировать ник</button>
                     <div class="value">••••••••</div>
-                    <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Пароль</button>
+                    <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Копировать пароль</button>
                 </div>
             `;
         }
@@ -257,7 +256,7 @@
         function cp(type, idx, txt) {
             navigator.clipboard.writeText(txt);
             const btn = document.getElementById(type === 'n' ? 'btn_n' : 'btn_p');
-            btn.innerText = 'OK';
+            btn.innerText = 'ГОТОВО';
             btn.classList.add('success');
             if (type === 'n') state[0] = 1; else state[1] = 1;
             if (state[0] && state[1]) {
