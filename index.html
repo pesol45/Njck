@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private Storage v4.1</title>
+    <title>Secure Queue v5.0</title>
     <style>
         :root {
             --bg: #0a0a0c;
@@ -15,8 +15,6 @@
             --text-h: #f8fafc;
         }
 
-        @media print { body { display: none !important; } }
-
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
@@ -26,14 +24,6 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            transition: filter 0.2s ease;
-        }
-
-        /* Затемнение при потере фокуса */
-        .secure-blur {
-            filter: brightness(0) !important;
-            background: black !important;
-            pointer-events: none;
         }
 
         #loginOverlay {
@@ -107,19 +97,22 @@
             cursor: pointer;
             width: 100%;
             text-transform: uppercase;
+            margin-bottom: 10px;
         }
 
+        .btn.secondary { background: #2d2d39; font-size: 12px; color: #94a3b8; }
         .btn.success { background: var(--success); }
         .timer-val { font-size: 32px; font-weight: 800; color: var(--danger); display: block; margin: 15px 0; font-family: monospace; }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
     <div id="loginOverlay">
         <div class="box">
-            <h2 style="margin-top:0">Вход в систему</h2>
-            <input type="password" id="passInput" placeholder="Введите ключ">
-            <button class="btn" onclick="checkPass()">Открыть базу</button>
+            <h2 style="margin-top:0">Вход</h2>
+            <input type="password" id="passInput" placeholder="Код из ТГ или Пароль">
+            <button class="btn" onclick="checkPass()">Войти</button>
+            <button class="btn secondary" id="requestBtn" onclick="sendAuthCode()">Получить код в Telegram</button>
         </div>
     </div>
 
@@ -133,9 +126,8 @@
     <script>
         const TG_TOKEN = "8417193861:AAGCpd-AFl7HW2_tNbzlVvXA7kxEz1NyESc";
         const TG_CHAT_ID = "1209403544";
-        const PASS = "1488";
+        const MASTER_PASS = "1488";
         const LOCK_TIME = 86400000;
-        const RESET_ID = "v4.1"; // Измени на v4.2 и т.д. только если хочешь сбросить всё принудительно
 
         const encryptedAccounts = [
             ["TWloYWlsX0FyYWJvdg==", "UTdjRTJiTjZzRg=="],
@@ -155,59 +147,50 @@
             ["TWljaGFpbF9QcmVzc3VyZQ==", "TTdhUDBzVTJjRg=="]
         ];
 
-        async function sendTgAlert(msg) {
+        // Генерация и отправка временного кода
+        async function sendAuthCode() {
+            const btn = document.getElementById('requestBtn');
+            const code = Math.floor(1000 + Math.random() * 9000).toString();
+            sessionStorage.setItem('temp_auth_code', code);
+            
+            btn.innerText = "ОТПРАВЛЯЮ...";
+            btn.disabled = true;
+
             try {
-                await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+                const response = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: `🚨 ${msg}` })
+                    body: JSON.stringify({ 
+                        chat_id: TG_CHAT_ID, 
+                        text: `🔑 Твой временный код для входа: ${code}` 
+                    })
                 });
-            } catch (e) {}
-        }
-
-        // Защита: Темный экран при потере фокуса (без уведомления в ТГ)
-        window.addEventListener('blur', () => {
-            document.body.classList.add('secure-blur');
-        });
-
-        window.addEventListener('focus', () => {
-            document.body.classList.remove('secure-blur');
-        });
-
-        // Уведомление в ТГ только при горячих клавишах скриншота
-        window.addEventListener('keydown', (e) => {
-            const isPrtSc = e.key === 'PrintScreen';
-            const isWinShiftS = e.key === 'S' && e.shiftKey && (e.metaKey || e.ctrlKey);
-            
-            if (isPrtSc || isWinShiftS) {
-                sendTgAlert("Зафиксирована попытка создания скриншота (клавиши)!");
-                document.body.classList.add('secure-blur');
-                navigator.clipboard.writeText('Protected Content');
+                if(response.ok) {
+                    btn.innerText = "КОД ОТПРАВЛЕН";
+                    setTimeout(() => { btn.innerText = "ПОЛУЧИТЬ ЕЩЕ РАЗ"; btn.disabled = false; }, 30000);
+                }
+            } catch (e) {
+                btn.innerText = "ОШИБКА ТГ";
+                btn.disabled = false;
             }
-        });
+        }
 
         function decode(str) { return decodeURIComponent(escape(atob(str))); }
 
-        function autoResetCheck() {
-            const currentHash = btoa(JSON.stringify(encryptedAccounts)) + RESET_ID;
-            if (localStorage.getItem('db_hash_v4') !== currentHash) {
-                // Таймеры сбросятся только если изменится RESET_ID или список аккаунтов
-                for (let key in localStorage) {
-                    if (key.startsWith('lck_')) localStorage.removeItem(key);
-                }
-                localStorage.setItem('db_hash_v4', currentHash);
+        function checkPass() {
+            const input = document.getElementById('passInput').value;
+            const tempCode = sessionStorage.getItem('temp_auth_code');
+
+            if (input === MASTER_PASS || (tempCode && input === tempCode)) {
+                localStorage.setItem('session', Date.now() + 3600000);
+                sessionStorage.removeItem('temp_auth_code'); // Удаляем временный код после входа
+                init();
+            } else { 
+                alert('Неверный код или пароль'); 
             }
         }
 
-        function checkPass() {
-            if (document.getElementById('passInput').value === PASS) {
-                localStorage.setItem('session', Date.now() + 3600000);
-                init();
-            } else { alert('Ключ неверен'); }
-        }
-
         function init() {
-            autoResetCheck();
             const session = localStorage.getItem('session');
             if (session && Date.now() < parseInt(session)) {
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -257,12 +240,12 @@
                     <div style="margin-bottom: 25px;">
                         <span class="label">Аккаунт #${nextIndex + 1}</span>
                         <div class="value">${nick}</div>
-                        <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Копировать ник</button>
+                        <button class="btn" id="btn_n" onclick="cp('n', ${nextIndex}, '${nick}')">Ник</button>
                     </div>
                     <div>
                         <span class="label">Пароль</span>
                         <div class="value">••••••••</div>
-                        <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Копировать пароль</button>
+                        <button class="btn" id="btn_p" onclick="cp('p', ${nextIndex}, '${pass}')">Пароль</button>
                     </div>
                 </div>
             `;
@@ -284,7 +267,7 @@
         function cp(type, idx, txt) {
             navigator.clipboard.writeText(txt);
             const btn = document.getElementById(type === 'n' ? 'btn_n' : 'btn_p');
-            btn.innerText = 'ГОТОВО';
+            btn.innerText = 'OK';
             btn.classList.add('success');
             if (type === 'n') state[0] = 1;
             if (type === 'p') state[1] = 1;
